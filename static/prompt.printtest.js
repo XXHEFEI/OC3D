@@ -11,7 +11,7 @@
  */
 
 const WORK_DIR   = "C:\\Users\\i26293\\Desktop\\ip-print-web";
-const SKILLS_DIR = "C:\\Users\\i26293\\.openclaw\\workspace\\skills";
+const SKILLS_DIR = "C:\\Users\\i26293\\Desktop\\ip-print-web";
 const STOCK_DIR  = "C:\\Users\\i26293\\Desktop\\ip-print-web\\static\\3D";
 const PRINTER_SERIAL = '20P6BJ652100030';
 const PRINTER_IP     = '10.238.235.64';

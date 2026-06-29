@@ -15,8 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from task_state import set_status, get_status
 
 BAMBU_SCRIPT = os.path.join(
-    os.environ.get("SKILLS_DIR",
-                    os.path.expanduser(r"~\.openclaw\workspace\skills")),
+    os.path.dirname(os.path.abspath(__file__)),
     "bambu-studio-ai", "scripts", "bambu.py"
 )
 
