@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git log *)",
+      "Bash(git rev-parse *)",
+      "Bash(git commit -m 'fix: address code review — extra None filtering, get_status error handling, type annotations *)",
+      "Bash(git commit -m 'refactor: strip main.py to static server, remove WS bridge *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(export BAMBU_MODE=\"local\")",
+      "Bash(export BAMBU_IP=\"10.238.235.64\")",
+      "Bash(export BAMBU_SERIAL=\"20P6BJ652100030\")",
+      "Bash(export BAMBU_ACCESS_CODE=\"c1957072\")",
+      "Bash(export PYTHONIOENCODING=\"utf-8\")",
+      "Bash(C:\\\\Program Files\\\\Python311\\\\python.exe *)"
+    ]
+  }
+}

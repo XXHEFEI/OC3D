@@ -1,0 +1,5 @@
+[
+  {"id": "costume_1", "name": "换装 1", "image": "/static/ip-costumes/1.png", "model": "cat.gcode.3mf"},
+  {"id": "costume_2", "name": "换装 2", "image": "/static/ip-costumes/2.png", "model": "cat.gcode.3mf"},
+  {"id": "painter", "name": "画家", "image": "/static/ip-costumes/画家.png", "model": "cat.gcode.3mf"}
+]
