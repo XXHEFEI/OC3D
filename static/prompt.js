@@ -1,13 +1,8 @@
 /**
- * prompt.printtest.js — TEST VARIANT: 3MF 直接打印流程（跳过 2D→3D 生成）。
+ * prompt.js — 3MF 直接打印流程。
  *
  * 用户选择形象 → OpenClaw Agent 直连打印机 → 发送对应 .3mf 文件打印。
  * bambu.py 通过 LAN (MQTT + FTPS) 直接与打印机通信，无需 Bambu Studio。
- *
- * Not wired permanently into index.html. To use: temporarily swap the
- * <script src> in templates/index.html from prompt.js to prompt.printtest.js,
- * then swap back to prompt.js when done testing.
- *
  */
 
 const WORK_DIR   = "C:\\Users\\i26293\\Desktop\\ip-print-web";

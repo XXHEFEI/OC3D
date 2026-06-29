@@ -51,7 +51,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 | `monitor_bridge.py` | 打印监控脚本 — 直连 MQTT 轮询进度，写入 task_state 供前端读取 |
 | `templates/index.html` | SPA 前端 — HTML/CSS 布局、DOM 渲染、交互逻辑 |
 | `static/gateway.js` | `GatewayChat` — WebSocket 连接 OpenClaw Gateway、RPC 通信、事件分发 |
-| `static/prompt.printtest.js` | `COSTUMES` 数据 + `buildPrompt()` — 构造发给 Agent 的打印 prompt |
+| `static/prompt.js` | `COSTUMES` 数据 + `buildPrompt()` — 构造发给 Agent 的打印 prompt |
 | `static/app.js` | 应用控制器（预留，当前逻辑内联在 index.html 中） |
 
 ### 预切片文件
@@ -76,7 +76,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 浏览器 (index.html)
   │  gateway.js → WebSocket → OpenClaw Gateway
-  │  prompt.printtest.js → buildPrompt() 构造打印指令
+  │  prompt.js → buildPrompt() 构造打印指令
   ▼
 OpenClaw Gateway (:18789)
   │  接收 prompt，调度 Agent 执行
@@ -137,7 +137,7 @@ Agent 只负责**按顺序启动命令并等待结束**，不做额外操作：
 
 ## IP 角色
 
-三个角色定义在 `static/prompt.printtest.js` 的 `COSTUMES` 数组中：
+三个角色定义在 `static/prompt.js` 的 `COSTUMES` 数组中：
 
 - 猫1 (`costume_1`) — `/static/ip-costumes/1.png`
 - 猫2 (`costume_2`) — `/static/ip-costumes/2.png`
