@@ -38,6 +38,8 @@ monitor_bridge.py 持续轮询并写状态文件，后端自动推送前端。
 只需按顺序执行命令，等每条命令自然结束。不要轮询状态、不要解析输出、
 不要推送前端——这些由 monitor_bridge.py 和后端 WebSocket 自动完成。
 
+**重要**：每一步失败都必须 set_status failed，确保前端能看到失败信息。
+
 ## 规则
 - 按步骤逐字执行命令，不改参数，不改路径，不改环境变量。
 - 不修改任何文件。
@@ -49,7 +51,13 @@ monitor_bridge.py 持续轮询并写状态文件，后端自动推送前端。
 $env:BAMBU_MODE = "local"; $env:BAMBU_IP = "${PRINTER_IP}"; $env:BAMBU_SERIAL = "${PRINTER_SERIAL}"; $env:BAMBU_ACCESS_CODE = "${ACCESS_CODE}"; $env:PYTHONIOENCODING = "utf-8"
 python "${bambuDir}\\bambu.py" print "${modelPath}" --confirmed
 \`\`\`
-输出含「Started printing」→ 继续。否则 set_status failed，停止。
+- 输出含「Started printing」→ 更新状态后继续步骤 2。
+- **失败**（不含 Started printing 或命令异常退出）→ 立即执行：
+\`\`\`python
+${setStatus}
+set_status('${taskId}', 'failed', step='print', progress=0, message='${costume.name} 打印发送失败')
+\`\`\`
+如果失败就停止，不再执行后续步骤。
 
 成功后更新状态：
 \`\`\`python
@@ -64,6 +72,14 @@ $env:BAMBU_MODE = "local"; $env:BAMBU_IP = "${PRINTER_IP}"; $env:BAMBU_SERIAL = 
 python "${WORK_DIR}\\monitor_bridge.py" ${taskId} --interval 60
 \`\`\`
 脚本内部自行轮询、写状态、判断退出。你不需要解析输出。
+- 脚本正常退出 → 继续步骤 3。
+- **脚本异常退出**（非 0 退出码或提前终止）→ 检查 work/{taskId}_state.json，
+  如果状态不是 done/failed 则 set_status failed：
+\`\`\`python
+${setStatus}
+set_status('${taskId}', 'failed', step='monitoring', progress=0, message='${costume.name} 监控异常中断')
+\`\`\`
+停止，不再执行后续步骤。
 
 ## 步骤 3 — 完成
 \`\`\`python
