@@ -5,11 +5,11 @@
  * bambu.py 通过 LAN (MQTT + FTPS) 直接与打印机通信，无需 Bambu Studio。
  */
 
-const WORK_DIR   = "C:\\Users\\i26293\\Desktop\\ip-print-web";
-const SKILLS_DIR = "C:\\Users\\i26293\\Desktop\\ip-print-web";
-const STOCK_DIR  = "C:\\Users\\i26293\\Desktop\\ip-print-web\\static\\3D";
+const WORK_DIR   = "/Users/hefei/Desktop/MX_intern/OC3D";
+const SKILLS_DIR = "/Users/hefei/Desktop/MX_intern/OC3D";
+const STOCK_DIR  = "/Users/hefei/Desktop/MX_intern/OC3D/static/3D";
 const PRINTER_SERIAL = '20P6BJ652100030';
-const PRINTER_IP     = '10.238.235.64';
+const PRINTER_IP     = '172.20.10.6';
 const ACCESS_CODE    = 'c1957072';
 
 
@@ -20,8 +20,8 @@ const COSTUMES = [
 ];
 
 function buildPrompt(costume, taskId) {
-  const modelPath = `${STOCK_DIR}\\${costume.model}`;
-  const bambuDir  = `${SKILLS_DIR}\\bambu-studio-ai\\scripts`;
+  const modelPath = `${STOCK_DIR}/${costume.model}`;
+  const bambuDir  = `${SKILLS_DIR}/bambu-studio-ai/scripts`;
   const setStatus  = [
     `import sys, os; os.environ['PYTHONIOENCODING'] = 'utf-8'`,
     `sys.path.insert(0, '${WORK_DIR}')`,
@@ -47,9 +47,9 @@ monitor_bridge.py 持续轮询并写状态文件，后端自动推送前端。
 - 判定标准见各步骤说明。
 
 ## 步骤 1 — 发送打印
-\`\`\`powershell
-$env:BAMBU_MODE = "local"; $env:BAMBU_IP = "${PRINTER_IP}"; $env:BAMBU_SERIAL = "${PRINTER_SERIAL}"; $env:BAMBU_ACCESS_CODE = "${ACCESS_CODE}"; $env:PYTHONIOENCODING = "utf-8"
-python "${bambuDir}\\bambu.py" print "${modelPath}" --confirmed
+\`\`\`bash
+export BAMBU_MODE=local BAMBU_IP="${PRINTER_IP}" BAMBU_SERIAL="${PRINTER_SERIAL}" BAMBU_ACCESS_CODE="${ACCESS_CODE}" PYTHONIOENCODING=utf-8
+python3 "${bambuDir}/bambu.py" print "${modelPath}" --confirmed
 \`\`\`
 - 输出含「Started printing」→ 更新状态后继续步骤 2。
 - **失败**（不含 Started printing 或命令异常退出）→ 立即执行：
@@ -67,9 +67,9 @@ set_status('${taskId}', 'printing', step='printing', progress=0, message='${cost
 
 ## 步骤 2 — 等待打印完成
 此命令阻塞运行直到打印结束自动退出。耐心等待，不要中断、不要并发。
-\`\`\`powershell
-$env:BAMBU_MODE = "local"; $env:BAMBU_IP = "${PRINTER_IP}"; $env:BAMBU_SERIAL = "${PRINTER_SERIAL}"; $env:BAMBU_ACCESS_CODE = "${ACCESS_CODE}"; $env:PYTHONIOENCODING = "utf-8"
-python "${WORK_DIR}\\monitor_bridge.py" ${taskId} --interval 60
+\`\`\`bash
+export BAMBU_MODE=local BAMBU_IP="${PRINTER_IP}" BAMBU_SERIAL="${PRINTER_SERIAL}" BAMBU_ACCESS_CODE="${ACCESS_CODE}" PYTHONIOENCODING=utf-8
+python3 "${WORK_DIR}/monitor_bridge.py" ${taskId} --interval 60
 \`\`\`
 脚本内部自行轮询、写状态、判断退出。你不需要解析输出。
 - 脚本正常退出 → 继续步骤 3。

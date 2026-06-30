@@ -47,7 +47,7 @@ GATEWAY_WS = "ws://127.0.0.1:18789"
 # 已经在 Bambu Studio 里手动切好片的官方校准方块项目文件。
 STOCK_PRINT_3MF = BASE / "static" / "3D" / "cat.gcode.3mf"
 DISCOVER_SCRIPT = BASE / "discover_printer.py"
-BAMBU_SKILL_DIR = Path("C:/Users/i26293/.openclaw/workspace/skills/bambu-studio-ai")
+BAMBU_SKILL_DIR = BASE / "bambu-studio-ai"
 BAMBU_SCRIPTS_DIR = BAMBU_SKILL_DIR / "scripts"
 BAMBU_SECRETS_PATH = BAMBU_SKILL_DIR / ".secrets.json"
 PRINTER_SERIAL = "20P6BJ652100030"
