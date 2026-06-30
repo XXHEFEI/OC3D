@@ -14,3 +14,7 @@ work/
 
 # Claude
 .claude/
+
+# Secrets (Meshy API key etc.) — never commit
+.meshy_key
+.secrets.json

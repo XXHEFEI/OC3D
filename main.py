@@ -19,10 +19,12 @@ import os
 import subprocess
 from pathlib import Path
 
+import io
+
 import websockets
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from starlette.staticfiles import StaticFiles
 
@@ -198,16 +200,34 @@ def api_download(task_id: str):
     state = task_state.get_status(task_id)
     if state.get("status") != "done":
         raise HTTPException(400, "Task not ready")
-    # Check both root and work/{task_id}/ for .3mf output
-    files = list(BASE.glob("*.3mf")) + list((WORK_DIR / task_id).glob("*.3mf"))
-    if not files:
-        raise HTTPException(404, ".3mf file not found")
-    path = files[0]
-    return FileResponse(
-        path,
-        filename=path.name,
-        media_type="application/vnd.ms-3mf",
+    # 生成半产出 work/{task_id}/model.stl；打印半产出 .3mf。两者都支持。
+    task_dir = WORK_DIR / task_id
+    files = (
+        list(task_dir.glob("*.stl"))
+        + list(task_dir.glob("*.3mf"))
+        + list(BASE.glob("*.3mf"))
     )
+    if not files:
+        raise HTTPException(404, "model file not found")
+    path = files[0]
+    media = "model/stl" if path.suffix.lower() == ".stl" else "application/vnd.ms-3mf"
+    return FileResponse(path, filename=path.name, media_type=media)
+
+
+@app.get("/api/qr/{task_id}")
+def api_qr(task_id: str, request: Request):
+    """返回一张二维码 PNG，内容是该任务下载链接的局域网 URL。
+
+    用 request.base_url 构造下载链接——所以请用局域网 IP(而非 localhost)访问本服务，
+    手机扫码才能连上。
+    """
+    import qrcode
+
+    download_url = str(request.base_url).rstrip("/") + f"/api/download/{task_id}"
+    img = qrcode.make(download_url)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
 
 
 @app.post("/api/print/{task_id}")
