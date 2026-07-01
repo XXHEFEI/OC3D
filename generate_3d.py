@@ -50,6 +50,29 @@ def _mock_stl(out_path):
     print(f"  [mock] 占位 STL: {out_path}")
 
 
+def _normalize_size(stl_path, target_mm):
+    """把模型等比缩放到最长边 ≈ target_mm（站姿模型最长边即高度）。就地重写 STL。
+    Meshy 输出的尺寸是任意单位，这里统一归一化，保证下载的模型高度约 target_mm。"""
+    try:
+        import trimesh
+        m = trimesh.load(stl_path)
+        longest = float(max(m.extents)) if len(m.extents) else 0.0
+        if longest <= 0:
+            return
+        scale = target_mm / longest
+        m.apply_scale(scale)
+        m.export(stl_path)
+        print(f"  已缩放: 最长边 {longest:.0f} → {target_mm}mm (scale {scale:.4f})")
+    except Exception as e:
+        print(f"  ⚠️ 缩放跳过: {e}")
+
+
+def _finalize(out_stl, target_mm):
+    """归一化尺寸后打印成功标志。"""
+    _normalize_size(out_stl, target_mm)
+    print(f"✅ Generated: {out_stl}")
+
+
 def _data_uri(png_path):
     with open(png_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("ascii")
@@ -131,6 +154,8 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--mock", action="store_true",
                     help="不调 Meshy，生成占位 STL（开发用，零额度）")
+    ap.add_argument("--max-mm", type=float, default=100.0,
+                    help="等比缩放到最长边≈此毫米数（默认 100 = 约 10cm 高）")
     args = ap.parse_args()
 
     if not args.combo and not args.image:
@@ -153,7 +178,7 @@ def main():
             _meshy_generate(view_paths, out_stl)
         if not os.path.exists(out_stl):
             _fail("未产出 STL")
-        print(f"✅ Generated: {out_stl}")
+        _finalize(out_stl, args.max_mm)
         return
 
     # 缓存命中 → 零额度
@@ -161,7 +186,7 @@ def main():
     if os.path.exists(cached):
         shutil.copyfile(cached, out_stl)
         print(f"  缓存命中: {cached}")
-        print(f"✅ Generated: {out_stl}")
+        _finalize(out_stl, args.max_mm)
         return
 
     # 合成三视图
@@ -178,7 +203,7 @@ def main():
 
     if not os.path.exists(out_stl):
         _fail("未产出 STL")
-    print(f"✅ Generated: {out_stl}")
+    _finalize(out_stl, args.max_mm)
 
 
 if __name__ == "__main__":

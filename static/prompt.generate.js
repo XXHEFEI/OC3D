@@ -59,7 +59,7 @@ ${setStatus}
 set_status('${taskId}', 'running', step='generating', progress=10, message='${costume.name} 升维生成中...')
 \`\`\`
 
-## 步骤 2 — 升维生成（合成三视图 → 升维模型 → 出 STL）
+## 步骤 2 — 升维生成（合成视图 → 升维模型 → 出 STL）
 此命令阻塞运行直到出文件。耐心等待，不要中断、不要并发。
 \`\`\`bash
 cd "${WORK_DIR}"
@@ -78,7 +78,7 @@ ${setStatus}
 set_status('${taskId}', 'done', step='done', progress=100,
   download_url='/api/download/${taskId}',
   qr_url='/api/qr/${taskId}',
-  message='${costume.name} 已生成，扫码或点击下载 .stl')
+  message='${costume.name} 已生成（约10cm），扫码或点击下载 .stl')
 \`\`\`
 告诉用户：${costume.name} 的 3D 模型已生成，可扫码下载带走。
 `.trim();

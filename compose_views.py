@@ -48,13 +48,16 @@ def _layer_path(cfg, kind, item_id, view):
 
 
 def compose(combo_id, out_dir):
-    """合成一套搭配的三视图，返回 {view: 输出路径}。"""
+    """合成一套搭配要用的视图，返回 {view: 输出路径}。
+    用哪些视图由 combos.json 的 "views" 决定（默认全部三视图；当前配置为仅 front）。"""
     cfg = _load_combos()
     clothes_id, accessory_id = parse_combo(combo_id, cfg)
     os.makedirs(out_dir, exist_ok=True)
 
+    views = cfg.get("views") or list(VIEWS)
+
     results = {}
-    for view in VIEWS:
+    for view in views:
         base_rel = cfg["base_views"][view]
         base_path = os.path.join(BASE, base_rel)
         if not os.path.exists(base_path):

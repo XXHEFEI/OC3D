@@ -5,8 +5,10 @@
     "side":  "2D 三视图/侧视图.png",
     "back":  "2D 三视图/后视图.png"
   },
+  "views": ["front"],
+  "_views_note": "喂给升维模型的视图。前端目前只出正视图，故只用 front（Meshy 接受 1~4 张，单图合法）。以后有侧/后视图素材时改成 [\"front\",\"side\",\"back\"] 即可，提示词/适配器不用动。",
   "layer_root": "layers",
-  "_layer_convention": "图层透明 PNG 放在 layers/clothes/<id>/{front,side,back}.png 和 layers/accessories/<id>/{front,side,back}.png；缺失的图层会被跳过（降级为仅基础视图），不会报错。",
+  "_layer_convention": "图层透明 PNG 放在 layers/clothes/<id>/{front,side,back}.png 和 layers/accessories/<id>/{front,side,back}.png；缺失的图层会被跳过（降级为仅基础视图），不会报错。当前只需 front。",
   "clothes": [
     {"id": "c1", "name": "衣服1"},
     {"id": "c2", "name": "衣服2"},
