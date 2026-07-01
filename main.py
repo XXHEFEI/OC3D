@@ -306,6 +306,28 @@ def api_print(task_id: str):
     return {"task_id": task_id, "status": "printing", "printer_ip": printer_ip}
 
 
+@app.get("/api/gateway-token")
+def api_gateway_token():
+    """读本机 OpenClaw 配置里的 gateway token，供前端连接用。
+    这样 token 不写死进仓库——每台机器读各自 openclaw.json（经 OPENCLAW_HOME 定位）。"""
+    home = os.environ.get("OPENCLAW_HOME") or os.path.expanduser("~/Desktop/openclaw-home")
+    cfg = Path(home) / ".openclaw" / "openclaw.json"
+    try:
+        with open(cfg, encoding="utf-8") as f:
+            data = json.load(f)
+        token = data["gateway"]["auth"]["token"]
+    except Exception as e:
+        raise HTTPException(500, f"读取 gateway token 失败（检查 OPENCLAW_HOME）: {e}")
+    return {"token": token}
+
+
 @app.get("/")
 def index():
     return FileResponse(TEMPLATES / "index.html")
+
+
+# 把 templates/ 下的页面按文件名当静态页提供（DIY 多页面流程：
+# /select.html /customize.html /preview_diy.html /takeaway.html）。
+# 必须放在所有 API/WS/"/" 路由之后挂载——先注册的路由优先匹配，
+# 只有未匹配到的路径（各 .html）才落到这里；页面内相对的 static/... 仍走 /static 挂载。
+app.mount("/", StaticFiles(directory=str(TEMPLATES), html=True), name="pages")

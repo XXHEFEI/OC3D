@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaX 空间站 - AI 3D 重构预览</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'PingFang SC', sans-serif; background: #08080c; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1a0f1c 0%, #050508 100%);}
+        
+        .top-bar { position: absolute; top: 40px; right: 60px; z-index: 100; }
+        .logo { height: 35px; opacity: 0.9; }
+
+        /* ==== 加载罩层 ==== */
+        #loading-view { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; gap: 80px; position: absolute; inset: 0; background: #050508; z-index: 50;}
+        .loading-card { background: rgba(255, 65, 108, 0.05); border: 2px solid #ff416c; border-radius: 20px; padding: 50px; width: 550px; position: relative; box-shadow: 0 0 30px rgba(255,65,108,0.1); }
+        .loading-title { font-size: 32px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px;}
+        .loading-highlight { color: #ff416c; font-size: 40px; text-shadow: 0 0 15px rgba(255,65,108,0.5); }
+        .loading-sub { font-size: 18px; color: #aaa; margin-bottom: 40px; letter-spacing: 1px;}
+        .progress-box { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #00F0FF, #ff416c); box-shadow: 0 0 15px #ff416c; transition: width 0.1s linear; }
+        .cat-think { width: 350px; filter: drop-shadow(0 0 20px rgba(255,65,108,0.15)); animation: float 3s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* ==== 预览界面 ==== */
+        #main-view { display: none; width: 100%; height: 100%; padding-top: 80px; }
+        
+        .left-stage { flex: 5.5; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-right: 1px solid rgba(255,255,255,0.05); }
+        .header-title { position: absolute; top: 20px; left: 60px; }
+        .title-text { font-size: 38px; font-weight: bold; color: #fff; margin-bottom: 12px; letter-spacing: 2px;}
+        .sub-text { font-size: 18px; color: #ff416c; opacity: 0.8;}
+        
+        .stage-center { position: relative; width: 100%; height: 60%; display: flex; justify-content: center; align-items: center; }
+        .stage-ground { position: absolute; bottom: 0; width: 400px; height: 80px; background: radial-gradient(ellipse at center, rgba(255,65,108,0.2) 0%, transparent 70%); border: 1px dashed rgba(255,65,108,0.3); border-radius: 50%; transform: rotateX(75deg); box-shadow: 0 0 30px rgba(255,65,108,0.1); }
+        .model-img { max-width: 80%; max-height: 100%; z-index: 10; object-fit: contain; animation: float 4s infinite ease-in-out; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8));}
+        
+        .right-panel { flex: 4.5; padding: 40px 60px; display: flex; flex-direction: column; justify-content: center; }
+        
+        .guide-area { display: flex; align-items: center; gap: 25px; margin-bottom: 50px; }
+        .guide-cat { width: 190px; filter: drop-shadow(0 0 15px rgba(255,65,108,0.1)); }
+        .guide-bubble { background: rgba(255,65,108,0.05); border: 1px solid #ff416c; padding: 25px 35px; border-radius: 16px; color: #ddd; font-size: 22px; line-height: 1.6; position: relative; flex: 1; box-shadow: inset 0 0 20px rgba(255,65,108,0.05);}
+        .guide-bubble::before { content: ''; position: absolute; top: 50%; left: -14px; transform: translateY(-50%); border-right: 14px solid #ff416c; border-top: 10px solid transparent; border-bottom: 10px solid transparent; }
+
+        .dock-card { background: rgba(20,20,25,0.8); padding: 50px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column;}
+        .dock-title { font-size: 28px; font-weight: bold; margin-bottom: 35px; letter-spacing: 1px;}
+        
+        .info-group { margin-bottom: 30px; }
+        .info-label { font-size: 18px; color: #666; margin-bottom: 8px; }
+        .info-val { font-size: 26px; font-weight: bold; color: #fff; }
+        .info-val.cyan { color: #ff416c; font-size: 22px;}
+
+        .btn-group { display: flex; gap: 20px; margin-top: 20px; }
+        .btn-back { background: transparent; border: 1px solid #444; color: #aaa; padding: 20px 35px; border-radius: 35px; font-size: 20px; cursor: pointer; transition: 0.3s; }
+        .btn-back:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff;}
+        .btn-confirm { background: linear-gradient(90deg, #ff416c, #ff4b2b); flex: 1; color: #fff; border: none; border-radius: 40px; font-size: 26px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(255,65,108,0.4); transition: 0.3s; letter-spacing: 2px;}
+        .btn-confirm:hover { transform: scale(1.02); box-shadow: 0 12px 35px rgba(255,65,108,0.6); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <img src="static/images/meta_logo.png" alt="Logo" class="logo">
+    </div>
+
+    <div id="loading-view">
+        <div class="loading-card">
+            <div class="loading-title">正在为您生成专属 <span class="loading-highlight">3D 模型</span>...</div>
+            <div id="loading-text" class="loading-sub">解析服装与配饰参数中...</div>
+            <div class="progress-box"><div id="loading-bar" class="progress-bar"></div></div>
+        </div>
+        <img src="static/images/cat_think.png" class="cat-think">
+    </div>
+
+    <div id="main-view">
+        <div class="left-stage">
+            <div class="header-title">
+                <div class="title-text">3D 模型全景预览</div>
+                <div class="sub-text">AI 已将您的专属设计具现化</div>
+            </div>
+            
+            <div class="stage-center">
+                <div class="stage-ground"></div>
+                <img id="model-display" src="" class="model-img">
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="guide-area">
+                <img src="static/images/cat.gif" class="guide-cat">
+                <div class="guide-bubble">
+                    喵呜！这就是根据您的搭配生成的 3D 模型实体啦！<br>
+                    如果满意的话，就可以进入下一步扫码提取咯~
+                </div>
+            </div>
+
+            <div class="dock-card">
+                <div class="dock-title">模型封装确认舱</div>
+                
+                <div class="info-group">
+                    <div class="info-label">模型状态</div>
+                    <div class="info-val">3D 拓扑结构构建完毕 ✅</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">渲染精度</div>
+                    <div class="info-val cyan">超高精度 / 支持多颜色打印</div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn-back" onclick="location.href='customize.html'">返回重选</button>
+                    <button class="btn-confirm" onclick="goTakeaway()">确认并生成数字凭证</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 解析传过来的衣服和配饰 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const c = urlParams.get('c') || 1;
+        const o = urlParams.get('o') || 1;
+        const task = urlParams.get('task') || '';
+
+        // 预览图仍用 2D 合成图（真 3D 模型是 .stl，供扫码下载，不在此页渲染）
+        const modelDisplay = document.getElementById('model-display');
+        modelDisplay.src = `static/xixi_diy/${c}_cloth_o${o}.png`;
+
+        // 确认按钮把 task 带到 takeaway
+        function goTakeaway() { location.href = 'takeaway.html?task=' + encodeURIComponent(task); }
+
+        // 加载页：轮询后端真实进度（generate_3d.py 通过 task_state 写入）
+        window.onload = () => {
+            const bar = document.getElementById('loading-bar');
+            const text = document.getElementById('loading-text');
+
+            if (!task) {  // 没 task（直接打开）：退化为简单填充，避免卡死
+                bar.style.width = '100%';
+                document.getElementById('loading-view').style.display = 'none';
+                document.getElementById('main-view').style.display = 'flex';
+                return;
+            }
+
+            const poll = setInterval(async () => {
+                try {
+                    const r = await fetch('/api/status/' + task);
+                    if (!r.ok) return;
+                    const s = await r.json();
+                    if (typeof s.progress === 'number') bar.style.width = Math.min(s.progress, 100) + '%';
+                    if (s.message) text.innerText = s.message;
+                    if (s.status === 'done') {
+                        clearInterval(poll);
+                        bar.style.width = '100%';
+                        text.innerText = '专属模型生成完毕！';
+                        text.style.color = '#ff416c';
+                        setTimeout(() => {
+                            document.getElementById('loading-view').style.display = 'none';
+                            document.getElementById('main-view').style.display = 'flex';
+                        }, 500);
+                    } else if (s.status === 'failed') {
+                        clearInterval(poll);
+                        text.innerText = '生成失败：' + (s.message || '未知错误');
+                        text.style.color = '#ff416c';
+                    }
+                } catch (e) { /* 轮询错误忽略，下次再试 */ }
+            }, 1500);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaX 空间站 - 扫码提取</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'PingFang SC', sans-serif; background: #050508; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1a0f1c 0%, #050508 100%);}
+        
+        .top-bar { position: absolute; top: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 60px; z-index: 100; pointer-events: none; align-items: center; }
+        .logo { height: 35px; opacity: 0.9; }
+
+        /* 核心提取卡片 */
+        .takeaway-card {
+            background: rgba(20, 20, 25, 0.85); border: 2px solid rgba(255, 65, 108, 0.3);
+            border-radius: 30px; padding: 60px 80px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 0 40px rgba(255,65,108,0.05);
+            backdrop-filter: blur(20px); position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center;
+        }
+
+        .title { font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 15px; letter-spacing: 2px;}
+        .subtitle { font-size: 20px; color: #ff416c; margin-bottom: 40px; letter-spacing: 1px;}
+
+        /* 二维码外框科技感特效 */
+        .qr-container {
+            position: relative; width: 280px; height: 280px; padding: 20px;
+            background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 40px;
+        }
+        /* 四角扫描框 */
+        .qr-container::before, .qr-container::after { content: ''; position: absolute; width: 30px; height: 30px; border-color: #ff416c; border-style: solid; }
+        .qr-container::before { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 10px;}
+        .qr-container::after { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 10px;}
+        .qr-container .corner-tr { position: absolute; top: -2px; right: -2px; width: 30px; height: 30px; border-top: 4px solid #ff416c; border-right: 4px solid #ff416c; border-top-right-radius: 10px;}
+        .qr-container .corner-bl { position: absolute; bottom: -2px; left: -2px; width: 30px; height: 30px; border-bottom: 4px solid #ff416c; border-left: 4px solid #ff416c; border-bottom-left-radius: 10px;}
+
+        /* 二维码图片，如果没有真实二维码，这里用一个纯白块+文字占位 */
+        .qr-image { width: 100%; height: 100%; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 24px;}
+        
+        .finish-btn { 
+            background: linear-gradient(90deg, #ff416c, #ff4b2b); color: #fff; border: none; padding: 20px 60px; border-radius: 40px; font-size: 24px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 65, 108, 0.4); transition: all 0.3s; letter-spacing: 2px; 
+        }
+        .finish-btn:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(255, 65, 108, 0.6); }
+
+        .cat-guide { position: absolute; bottom: -50px; left: -180px; width: 220px; filter: drop-shadow(0 0 20px rgba(255,65,108,0.2));}
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <img src="static/images/meta_logo.png" alt="Logo" class="logo">
+    </div>
+
+    <div class="takeaway-card">
+        <div class="title">数字资产已就绪</div>
+        <div class="subtitle">请使用手机扫码，将您的专属 3D 模型保存至本地</div>
+        
+        <div class="qr-container">
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="qr-image">
+                <img id="qr-img" src="" alt="二维码" style="width:100%; height:100%; object-fit:cover; border-radius: 10px;" onerror="this.outerHTML='<div>二维码生成中…</div>'">
+            </div>
+        </div>
+
+        <button class="finish-btn" onclick="location.href='index.html'">结束 / 返回首页</button>
+
+        <img src="static/images/cat.png" class="cat-guide">
+    </div>
+
+    <script>
+        // 用本次任务的 task_id 拉取真实二维码（内容 = 该模型的局域网下载链接）
+        const task = new URLSearchParams(location.search).get('task');
+        if (task) document.getElementById('qr-img').src = '/api/qr/' + encodeURIComponent(task);
+    </script>
+
+</body>
+</html>

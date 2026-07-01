@@ -5,7 +5,7 @@
  * Pure business logic — no DOM dependencies.
  */
 
-const AUTH_TOKEN = 'e967ae3cf75190019f45e871a2def5a48c5ef0a4baf2266a';
+const AUTH_TOKEN = '';  // 兜底为空；token 连接时从 /api/gateway-token 动态取（不写死进仓库，各机器读各自本机配置）
 const CLIENT_ID = 'openclaw-control-ui';
 
 class GatewayChat {
@@ -30,7 +30,20 @@ class GatewayChat {
     });
   }
 
+  async _fetchToken() {
+    // 从后端取本机 gateway token（不写死进仓库）；取不到则用兜底常量
+    try {
+      const r = await fetch('/api/gateway-token');
+      if (r.ok) {
+        const d = await r.json();
+        if (d && d.token) return d.token;
+      }
+    } catch (e) { /* 用兜底 */ }
+    return AUTH_TOKEN;
+  }
+
   async connect() {
+    const token = await this._fetchToken();
     const wsUrl = `ws://${location.host}/ws/gateway`;
     this.ws = new WebSocket(wsUrl);
 
@@ -51,7 +64,7 @@ class GatewayChat {
             client: { id: CLIENT_ID, version: '1.0.0', platform: 'windows', mode: 'webchat' },
             role: 'operator', scopes: ['operator.read', 'operator.write'],
             caps: [], commands: [], permissions: {},
-            auth: { token: AUTH_TOKEN },
+            auth: { token },
             locale: 'zh-CN', userAgent: 'ip-print-web/1.0',
           });
 

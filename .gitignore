@@ -18,3 +18,6 @@ work/
 # Secrets (Meshy API key etc.) — never commit
 .meshy_key
 .secrets.json
+
+# 本地测试图
+testCat*.png
