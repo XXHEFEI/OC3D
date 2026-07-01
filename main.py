@@ -2,7 +2,7 @@
 main.py — FastAPI backend for IP Print Web.
 
 Endpoints:
-  GET  /              → index.html
+  GET  /              → select.html（新前端入口：打印 / 换装建模）
   GET  /ws/gateway    → WebSocket proxy to OpenClaw Gateway
   GET  /api/list-ips  → IP character list
   POST /api/generate  → create a task, return task_id
@@ -323,7 +323,8 @@ def api_gateway_token():
 
 @app.get("/")
 def index():
-    return FileResponse(TEMPLATES / "index.html")
+    # 新前端统一入口：select.html（左打印 / 右换装建模）
+    return FileResponse(TEMPLATES / "select.html")
 
 
 # 把 templates/ 下的页面按文件名当静态页提供（DIY 多页面流程：
