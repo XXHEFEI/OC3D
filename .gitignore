@@ -21,3 +21,6 @@ work/
 
 # 本地测试图
 testCat*.png
+
+# macOS
+.DS_Store

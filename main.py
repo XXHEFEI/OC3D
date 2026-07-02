@@ -42,6 +42,7 @@ IPS_DIR = BASE / "ips"
 WORK_DIR = BASE / "work"
 STATIC_DIR = BASE / "static"
 TEMPLATES = BASE / "templates"
+IP_IMAGES_DIR = BASE / "曦曦IP" / "曦曦IP" / "IP换装"
 
 GATEWAY_WS = "ws://127.0.0.1:18789"
 
@@ -81,6 +82,7 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/ips", StaticFiles(directory=str(IP_IMAGES_DIR)), name="ips")
 
 
 # ─── WebSocket proxy to OpenClaw Gateway ─────────────────────────────────────
@@ -214,20 +216,41 @@ def api_download(task_id: str):
     return FileResponse(path, filename=path.name, media_type=media)
 
 
+def _lan_ip() -> str:
+    """本机主局域网 IP。用 UDP socket 探测出口网卡地址（不实际发包），
+    这样即使操作台用 localhost 打开页面，二维码也能指向手机可连的局域网地址。"""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
 @app.get("/api/qr/{task_id}")
 def api_qr(task_id: str, request: Request):
-    """返回一张二维码 PNG，内容是该任务下载链接的局域网 URL。
+    """返回二维码 PNG，编码该任务 STL 的下载链接（现场可用）。
 
-    用 request.base_url 构造下载链接——所以请用局域网 IP(而非 localhost)访问本服务，
-    手机扫码才能连上。
+    默认自动用本机局域网 IP + 当前端口构造链接（即使用 localhost 打开页面也没关系）；
+    手机需与本机同一 Wi-Fi。若有固定外网地址/隧道，设环境变量 OC3D_PUBLIC_BASE
+    （如 https://xxx.ngrok.io）覆盖。实际编码的链接放在响应头 X-Download-URL 便于核对。
     """
     import qrcode
 
-    download_url = str(request.base_url).rstrip("/") + f"/api/download/{task_id}"
+    base = os.environ.get("OC3D_PUBLIC_BASE", "").rstrip("/")
+    if not base:
+        port = request.url.port or 8080
+        base = f"http://{_lan_ip()}:{port}"
+    download_url = f"{base}/api/download/{task_id}"
+
     img = qrcode.make(download_url)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    return Response(content=buf.getvalue(), media_type="image/png")
+    return Response(content=buf.getvalue(), media_type="image/png",
+                    headers={"X-Download-URL": download_url})
 
 
 @app.post("/api/print/{task_id}")
