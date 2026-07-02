@@ -142,3 +142,27 @@ Agent 只负责**按顺序启动命令并等待结束**，不做额外操作：
 - 猫1 (`costume_1`) — `/static/ip-costumes/1.png`
 - 猫2 (`costume_2`) — `/static/ip-costumes/2.png`
 - 画家 (`painter`) — `/static/ip-costumes/画家.png`
+
+## 搬到别的机器需要改什么（写死的本机路径 / 配置）
+
+以下都是按开发机（macOS, 用户 hefei）写死的，换机器/部署时要按实际情况调整：
+
+**仓库内（git 跟踪，需手动改）：**
+
+| 文件:行 | 写死的值 | 换机器时改成 |
+|---|---|---|
+| `static/prompt.generate.js` `GEN_WORK_DIR` | `/Users/hefei/Desktop/MX_intern/OC3D` | 本机仓库根目录绝对路径 |
+| `static/prompt.generate.js` `GEN_PYTHON` | `/opt/anaconda3/bin/python3` | 装了 requests/trimesh/oss2 的 python3 绝对路径（Agent 要用它跑 generate_3d.py）|
+| `static/prompt.js` `WORK_DIR`/`SKILLS_DIR`/`STOCK_DIR` | `/Users/hefei/.../OC3D` | 本机仓库根目录（打印半）|
+| `static/prompt.js` `PRINTER_IP`/`PRINTER_SERIAL`/`ACCESS_CODE` | `172.20.10.6` 等 | 现场打印机的 IP/序列号/访问码 |
+| `main.py` `/api/gateway-token` 兜底 | `~/Desktop/openclaw-home` | 优先用环境变量 `OPENCLAW_HOME`；启动脚本已 export，改这个即可 |
+
+**不在仓库内（gitignore / 桌面，各机器自建）：**
+
+- `.oss.json`（阿里云 OSS 凭据，各机器填自己的；模板见 `.oss.json.example`）
+- `.meshy_key`（Meshy API key，各机器自己放）
+- 桌面 `启动OC3D换装Demo.command` / `停止OC3D换装Demo.command`：里面 `OPENCLAW_BIN`/`OPENCLAW_HOME_DIR`/`PROJECT_DIR` 是本机绝对路径，换机器要改（脚本本身不在仓库，需各机器自备）
+
+**依赖**：generate_3d.py 需要 `requests`、`trimesh`、`Pillow`、`oss2`；且必须装在 `GEN_PYTHON` 指向的那个解释器里（Agent 默认的系统 python3 可能没装 → 会 `ModuleNotFoundError`）。
+
+**gateway token**：不用改——前端 `gateway.js` 运行时从 `/api/gateway-token` 动态取本机 OpenClaw 配置里的 token，不写死。
