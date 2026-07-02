@@ -1,8 +1,9 @@
 {
-  "_comment": "换装搭配注册表。衣服×配饰各 6（预留 7×7）。前端预渲染合成图直接喂升维模型，路径 static/xixi_diy/{cloth}_cloth_o{ornament}.png。combo id = \"{cloth}_{ornament}\"，如 3_2 = 衣3+配2。某搭配是否可用 = 对应合成图是否存在（generate_3d.py 用文件存在性校验，缺图的搭配前端应置灰）。名称与 templates/customize.html 的 wardrobeData 保持一致。",
+  "_comment": "换装搭配注册表，规模跟随 master：衣服 0-6、配饰 0-6，共 7×7=49。id 0 表示无（衣0=经典原皮，配0=卸下配饰）。前端预渲染合成图直喂升维模型，统一命名 static/xixi_diy/{cloth}_cloth_o{ornament}.png（含 0_cloth_o0.png）。combo id = \"{cloth}_{ornament}\"，如 3_2 = 衣3+配2、0_0 = 原皮无配饰。名称与 templates/customize.html 的 wardrobeData 一致。",
   "composite_dir": "static/xixi_diy",
   "composite_pattern": "{cloth}_cloth_o{ornament}.png",
   "clothes": [
+    {"id": 0, "name": "经典原皮"},
     {"id": 1, "name": "元气背带"},
     {"id": 2, "name": "清新西装"},
     {"id": 3, "name": "艺术工坊"},
@@ -11,6 +12,7 @@
     {"id": 6, "name": "甜心制服"}
   ],
   "ornaments": [
+    {"id": 0, "name": "卸下配饰"},
     {"id": 1, "name": "出游装备"},
     {"id": 2, "name": "暖冬套装"},
     {"id": 3, "name": "大师画板"},

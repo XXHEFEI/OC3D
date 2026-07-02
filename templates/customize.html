@@ -47,18 +47,20 @@
         }
         @keyframes hover-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         
-        /* 主图：合成后的效果图 */
+        /* 主图：保留过渡效果，用于透明度的瞬间消失和浮现 */
         .stage-model { 
             max-width: 90%; max-height: 100%; 
             object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); 
-            transition: 0.3s; position: relative; z-index: 2; border-radius: 20px;
+            transition: all 0.3s ease; 
+            position: relative; z-index: 2; border-radius: 20px;
+            opacity: 1; transform: scale(1);
         }
 
         /* 全息底座 */
         .hologram-base { position: absolute; bottom: 3%; width: 400px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255,65,108,0.3) 0%, transparent 70%); border: 2px dashed rgba(255,65,108,0.3); transform: rotateX(75deg); box-shadow: 0 0 40px rgba(255,65,108,0.2); z-index: 1; }
 
         /* 渲染时的镭射扫描线 */
-        .laser-scanner { position: absolute; top: 0; left: -10%; width: 120%; height: 4px; background: #fff; box-shadow: 0 0 20px 8px #ff416c, 0 0 40px 10px #00F0FF; border-radius: 50%; z-index: 20; display: none; animation: scan-down 1.5s ease-in-out infinite alternate; }
+        .laser-scanner { position: absolute; top: 0; left: -10%; width: 120%; height: 4px; background: #fff; box-shadow: 0 0 20px 8px #ff416c, 0 0 40px 10px #00F0FF; border-radius: 50%; z-index: 20; display: none; animation: scan-down 1s ease-in-out infinite alternate; }
         @keyframes scan-down { 0% { top: 5%; opacity: 0;} 10% { opacity: 1;} 90% { opacity: 1;} 100% { top: 95%; opacity: 0;} }
 
         /* ==== 右侧：操作工坊 ==== */
@@ -87,17 +89,18 @@
         .item-btn.active { background: rgba(255,65,108,0.2); border-color: #ff416c; box-shadow: 0 0 15px rgba(255,65,108,0.3); }
         .item-btn.active::after { content: '✓'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #ff416c; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;}
 
-        /* 更新：将表情文字替换为真实的缩略图样式 */
+        /* 常规图片缩略图样式（统一使用白底） */
         .item-thumb { width: 75px; height: 75px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; background: #fff; padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);}
+        
+        /* 专属保留：配饰用的“卸下/取消”科技感虚线框图标 */
+        .cancel-thumb { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: rgba(255, 65, 108, 0.05); margin-bottom: 10px; border: 2px dashed rgba(255, 65, 108, 0.5); border-radius: 8px; color: #ff416c;}
+
         .item-name { font-size: 16px; color: #eee; font-weight: bold; letter-spacing: 1px;}
 
         .action-row { margin-top: auto; display: flex; padding-top: 30px; }
         .pack-btn { background: linear-gradient(90deg, #ff416c, #ff4b2b); width: 100%; color: white; border: none; padding: 20px; border-radius: 40px; font-size: 24px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(255, 65, 108, 0.4); transition: all 0.3s; letter-spacing: 2px; }
         .pack-btn:hover { transform: scale(1.02); box-shadow: 0 12px 35px rgba(255, 65, 108, 0.6); }
 
-        /* 封装成功遮罩 */
-        .success-overlay { position: fixed; inset: 0; background: rgba(5,5,8,0.95); backdrop-filter: blur(20px); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .capsule-icon { font-size: 100px; margin-bottom: 30px; animation: hover-float 3s infinite; text-shadow: 0 0 30px rgba(255,65,108,0.8); }
     </style>
 </head>
 <body>
@@ -112,12 +115,12 @@
         <div class="left-stage">
             <div class="stage-title">
                 <h2>AI 重构预览</h2>
-                <p>实时渲染中...</p>
+                <p>Qwen 算力引擎实时渲染中...</p>
             </div>
             
             <div class="model-wrapper">
                 <div id="laser" class="laser-scanner"></div>
-                <img id="main-model" src="static/xixi_diy/1_cloth_o1.png" class="stage-model" alt="合成效果图">
+                <img id="main-model" src="static/xixi_diy/0_cloth_o0.png" class="stage-model" alt="合成效果图">
             </div>
             
             <div class="hologram-base"></div>
@@ -148,22 +151,13 @@
         </div>
     </div>
 
-    <div class="success-overlay" id="success-overlay">
-        <div class="capsule-icon">💊</div>
-        <div style="font-size: 36px; font-weight: bold; color: #ff416c; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255,65,108,0.6);">数字胶囊已生成！</div>
-        <div style="font-size: 18px; color: #ccc; text-align: center; line-height: 1.6;">
-            包含最新搭配的 .3mf 格式的高精 3D 源文件已成功打包。<br>
-            快去使用 3D 打印机将它具现化吧！
-        </div>
-        <button class="pack-btn" style="width: 300px; margin-top: 50px;" onclick="location.href='/'">保存并返回首页</button>
-    </div>
-
     <script src="static/gateway.js?v=2"></script>
     <script src="static/prompt.generate.js?v=2"></script>
     <script>
-        // 数据配置 - 指向单独的展示选项缩略图
         const wardrobeData = {
             cloth: [
+                // 经典原皮现在使用纯衣服图 0.jpg
+                { id: 0, name: "经典原皮", thumb: "static/xixi_diy/cloth/0.png", desc: "回归最纯粹的数字形态！清爽自在喵~" },
                 { id: 1, name: "元气背带", thumb: "static/xixi_diy/cloth/1.png", desc: "经典的蓝白格子背带裤，充满童趣与活力喵！" },
                 { id: 2, name: "清新西装", thumb: "static/xixi_diy/cloth/2.png", desc: "哇哦！浅蓝色小西装，非常干练有型，气质满分！" },
                 { id: 3, name: "艺术工坊", thumb: "static/xixi_diy/cloth/3.png", desc: "沾满颜料的围裙，看来你准备好创作旷世杰作了！" },
@@ -172,6 +166,8 @@
                 { id: 6, name: "甜心制服", thumb: "static/xixi_diy/cloth/6.png", desc: "甜度超标啦！粉色制服绝对是全场最吸睛的搭配喵~" }
             ],
             accessory: [
+                // 配饰恢复为卸下按键 (isCancel: true)
+                { id: 0, name: "卸下配饰", isCancel: true, desc: "摘下多余的装饰，轻装上阵也不错！" },
                 { id: 1, name: "出游装备", thumb: "static/xixi_diy/ornament/1.png", desc: "搭配上这套遮阳配饰，出游感立马拉满！" },
                 { id: 2, name: "暖冬套装", thumb: "static/xixi_diy/ornament/2.png", desc: "戴上围巾手套，冬日里的温暖氛围出来了！" },
                 { id: 3, name: "大师画板", thumb: "static/xixi_diy/ornament/3.png", desc: "拿上这块调色板，你就是空间站最靓的艺术家！" },
@@ -183,19 +179,17 @@
 
         let currentTab = 'cloth';
         
-        // 全局状态：记录当前选中的衣服和配饰的 ID
-        let selectedCloth = 1;
-        let selectedOrnament = 1;
+        // 全局状态：0代表什么都不穿（即原皮）
+        let selectedCloth = 0;
+        let selectedOrnament = 0;
         
         let isRendering = false;
-
-        // 初始化页面
         let gw = null;  // OpenClaw Gateway 连接，点封装时按需连接
+
         window.onload = () => {
             renderGrid('cloth');
         };
 
-        // 切换面板 (服饰 / 配饰)
         function switchTab(tabType) {
             if (isRendering) return;
             currentTab = tabType;
@@ -207,75 +201,86 @@
             renderGrid(tabType);
         }
 
-        // 渲染对应的物品列表
         function renderGrid(tabType) {
             const container = document.getElementById('grid-container');
             container.innerHTML = ''; 
             
             const items = wardrobeData[tabType];
-            
-            // 判断当前选项卡对应的是哪个选中的ID
             const currentSelectedId = tabType === 'cloth' ? selectedCloth : selectedOrnament;
             
             items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = `item-btn ${currentSelectedId === item.id ? 'active' : ''}`;
-                // 使用缩略图图片代替文字Emoji
-                div.innerHTML = `
-                    <img class="item-thumb" src="${item.thumb}" alt="${item.name}">
-                    <div class="item-name">${item.name}</div>
-                `;
+                
+                // 如果是配饰里的“卸下配饰”，渲染特殊的取消样式
+                if (item.isCancel) {
+                    div.innerHTML = `
+                        <div class="cancel-thumb">🚫</div>
+                        <div class="item-name">${item.name}</div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img class="item-thumb" src="${item.thumb}" alt="${item.name}">
+                        <div class="item-name">${item.name}</div>
+                    `;
+                }
+                
                 div.onclick = () => applyMagic(tabType, item.id, item.desc);
                 container.appendChild(div);
             });
         }
 
-        // 核心交互：点击物品进行换装
+        // 绝对路径组合规则 (主舞台图片)
+        function getImagePath(c, o) {
+            if (c === 0 && o === 0) return 'static/xixi_diy/0_cloth_o0.png';
+            if (c === 0 && o !== 0) return `static/xixi_diy/0_cloth_o${o}.png`;
+            if (c !== 0 && o === 0) return `static/xixi_diy/${c}_cloth_o0.png`;
+            return `static/xixi_diy/${c}_cloth_o${o}.png`;
+        }
+
         function applyMagic(type, id, catSpeech) {
             if (isRendering) return; 
-            
-            // 如果点击的是已经选中的项，直接忽略
             if (type === 'cloth' && selectedCloth === id) return;
             if (type === 'accessory' && selectedOrnament === id) return;
 
             isRendering = true;
             
-            // 更新当前选中的ID
             if (type === 'cloth') {
                 selectedCloth = id;
             } else {
                 selectedOrnament = id;
             }
             
-            // 刷新网格UI选中状态
             renderGrid(currentTab); 
 
-            // 获取 DOM 元素
             const mainImg = document.getElementById('main-model');
             const laser = document.getElementById('laser');
             const bubble = document.getElementById('cat-bubble');
             const cat = document.getElementById('cat-img');
             const packBtn = document.getElementById('pack-btn');
 
-            // 1. 开启 AI 扫描特效与 UI 锁定
             packBtn.disabled = true;
             packBtn.style.background = "#333";
-            packBtn.innerText = "算力渲染中...";
-            
-            laser.style.display = 'block';
-            mainImg.style.filter = 'brightness(0.2) grayscale(1)'; // 目标变暗
+            packBtn.innerText = "全息粒子重组中...";
             
             cat.src = 'static/images/cat_guide.png';
-            bubble.innerHTML = `<span style="color:#ff416c; font-weight:bold;">AI 正在生成全新图层...</span><br>融合衣服与配饰参数中！`;
+            bubble.innerHTML = `<span style="color:#00F0FF; font-weight:bold;">正在同步算力空间...</span><br>剥离旧网格并投射新图层！`;
 
-            // 2. 模拟 1.2秒的大模型处理延迟
+            // 瞬间消失
+            mainImg.style.opacity = '0';
+            mainImg.style.transform = 'scale(0.9)'; 
+            laser.style.display = 'block';
+
+            // 提前预加载
+            const newImgPath = getImagePath(selectedCloth, selectedOrnament);
+            const preloader = new Image();
+            preloader.src = newImgPath;
+
+            // 等待 1.2 秒后强制浮现新图
             setTimeout(() => {
-                // 根据绝对命名规则拼接合成图的路径
-                // 例如：static/xixi_diy/2_cloth_o3.png
-                const combinedImgPath = `static/xixi_diy/${selectedCloth}_cloth_o${selectedOrnament}.png`;
-                
-                mainImg.src = combinedImgPath;
-                mainImg.style.filter = 'drop-shadow(0 15px 30px rgba(0,0,0,0.8))';
+                mainImg.src = newImgPath;
+                mainImg.style.opacity = '1';
+                mainImg.style.transform = 'scale(1)';
                 
                 laser.style.display = 'none';
                 cat.src = 'static/images/cat.gif';
@@ -286,35 +291,28 @@
                 packBtn.innerText = "✨ 封装数据胶囊";
                 
                 isRendering = false;
-            }, 1200);
+            }, 1200); 
         }
 
-        // 打包动作：连 Gateway → 创建任务 → 让 OpenClaw Agent 跑升维 → 跳预览页看真实进度
+        // 封装：连 Gateway → 建任务 → 让 OpenClaw Agent 跑升维 → 跳预览页看真实进度
         async function packCapsule() {
             const comboId = `${selectedCloth}_${selectedOrnament}`;
             const btn = document.getElementById('pack-btn');
             btn.disabled = true;
             btn.style.background = "#333";
             try {
-                // 1) 确保已连上 OpenClaw Gateway（连接是异步握手，必须等它完成再发指令）
                 if (!gw) gw = new GatewayChat();
-                if (!gw.connected) {
-                    btn.innerText = "连接 OpenClaw...";
-                    await gw.connect();
-                }
-                // 2) 建任务
+                if (!gw.connected) { btn.innerText = "连接 OpenClaw..."; await gw.connect(); }
                 btn.innerText = "正在封装...";
                 const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ip_id: comboId }),
                 });
                 const { task_id } = await res.json();
-                // 3) 把生成提示词发给 Agent（等发送成功再跳转）
                 await gw.sendMessage(buildGenPrompt(comboId, task_id));
                 location.href = `preview_diy.html?c=${selectedCloth}&o=${selectedOrnament}&task=${task_id}`;
             } catch (e) {
-                alert('生成启动失败：' + (e.message || e) + '\n请确认 OpenClaw Gateway 已启动（启动脚本里应已拉起）。');
+                alert('生成启动失败：' + (e.message || e) + '\n请确认 OpenClaw Gateway 已启动。');
                 btn.disabled = false;
                 btn.style.background = "linear-gradient(90deg, #ff416c, #ff4b2b)";
                 btn.innerText = "✨ 封装数据胶囊";
