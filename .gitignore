@@ -24,3 +24,6 @@ testCat*.png
 
 # macOS
 .DS_Store
+
+# 阿里云 OSS 凭据(不进仓库)
+.oss.json

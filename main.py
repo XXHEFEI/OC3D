@@ -24,7 +24,7 @@ import io
 import websockets
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from pydantic import BaseModel
 from starlette.staticfiles import StaticFiles
 
@@ -202,6 +202,9 @@ def api_download(task_id: str):
     state = task_state.get_status(task_id)
     if state.get("status") != "done":
         raise HTTPException(400, "Task not ready")
+    # 有云链接则直接跳转到 OSS（公网可下）
+    if state.get("oss_url"):
+        return RedirectResponse(state["oss_url"])
     # 生成半产出 work/{task_id}/model.stl；打印半产出 .3mf。两者都支持。
     task_dir = WORK_DIR / task_id
     files = (
@@ -240,11 +243,16 @@ def api_qr(task_id: str, request: Request):
     """
     import qrcode
 
-    base = os.environ.get("OC3D_PUBLIC_BASE", "").rstrip("/")
-    if not base:
-        port = request.url.port or 8080
-        base = f"http://{_lan_ip()}:{port}"
-    download_url = f"{base}/api/download/{task_id}"
+    # 优先用云端(OSS)公网链接——任意网络都能下，最适合场馆
+    oss_url = task_state.get_status(task_id).get("oss_url")
+    if oss_url:
+        download_url = oss_url
+    else:
+        base = os.environ.get("OC3D_PUBLIC_BASE", "").rstrip("/")
+        if not base:
+            port = request.url.port or 8080
+            base = f"http://{_lan_ip()}:{port}"
+        download_url = f"{base}/api/download/{task_id}"
 
     img = qrcode.make(download_url)
     buf = io.BytesIO()

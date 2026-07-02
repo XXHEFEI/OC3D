@@ -106,8 +106,46 @@ def _normalize_size(stl_path, target_mm):
         print(f"  ⚠️ 缩放跳过: {e}")
 
 
-def _finalize(out_stl, target_mm):
+def _oss_upload(stl_path, task_id):
+    """若配置了 .oss.json，把 STL 上传到阿里云 OSS，返回可公网下载的预签名 URL；
+    否则返回 None（回退局域网模式）。凭据只从 .oss.json（gitignored）读，不进仓库。"""
+    cfg_path = os.path.join(BASE, ".oss.json")
+    if not os.path.exists(cfg_path):
+        return None
+    try:
+        import json as _j
+        with open(cfg_path, encoding="utf-8") as f:
+            c = _j.load(f)
+        if not c.get("access_key_id") or c["access_key_id"].startswith("填"):
+            print("  ⚠️ .oss.json 未填 AccessKey，跳过云上传")
+            return None
+        import oss2
+        auth = oss2.Auth(c["access_key_id"], c["access_key_secret"])
+        bucket = oss2.Bucket(auth, "https://" + c["endpoint"], c["bucket"])
+        key = f"models/{task_id or os.path.basename(os.path.dirname(stl_path))}.stl"
+        print(f"  ☁️ 上传 OSS: {key} ...")
+        bucket.put_object_from_file(key, stl_path)
+        expire = int(c.get("url_expire_days", 7)) * 86400
+        # 预签名 GET URL（bucket 保持私有，链接带时限）；slashes_safe 让 URL 直接可用
+        url = bucket.sign_url("GET", key, expire, slash_safe=True)
+        print(f"  ☁️ OSS 链接（{c.get('url_expire_days',7)}天有效）: {url}")
+        return url
+    except Exception as e:
+        print(f"  ⚠️ OSS 上传失败（回退局域网）: {e}")
+        return None
+
+
+def _finalize(out_stl, target_mm, task_id=None):
     _normalize_size(out_stl, target_mm)
+    oss_url = _oss_upload(out_stl, task_id)
+    if oss_url and task_id:
+        # 写进 task_state，供 /api/qr、/api/download 用（set_status 合并保留）
+        try:
+            import task_state
+            task_state.set_status(task_id, "running", step="generating",
+                                  progress=99, message="已上传云端", oss_url=oss_url)
+        except Exception as e:
+            print(f"  ⚠️ 写 oss_url 失败: {e}")
     print(f"✅ Generated: {out_stl}")
 
 
@@ -214,7 +252,7 @@ def main():
         if os.path.exists(cached):
             shutil.copyfile(cached, out_stl)
             print(f"  缓存命中: {cached}")
-            _finalize(out_stl, args.max_mm)
+            _finalize(out_stl, args.max_mm, args.task_id)
             return
 
     # 确定输入图（combo → 预渲染合成图；或直接 --image）
@@ -232,7 +270,7 @@ def main():
 
     if not os.path.exists(out_stl):
         _fail("未产出 STL")
-    _finalize(out_stl, args.max_mm)
+    _finalize(out_stl, args.max_mm, args.task_id)
 
 
 if __name__ == "__main__":
