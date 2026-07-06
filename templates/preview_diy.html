@@ -116,13 +116,14 @@
     <script>
         // 解析传过来的衣服和配饰 ID
         const urlParams = new URLSearchParams(window.location.search);
-        const c = urlParams.get('c') || 1;
-        const o = urlParams.get('o') || 1;
+        // combo id 从 0 开始（0=经典原皮/卸下配饰），默认值同步为 0
+        const c = urlParams.get('c') || 0;
+        const o = urlParams.get('o') || 0;
         const task = urlParams.get('task') || '';
 
-        // 预览图仍用 2D 合成图（真 3D 模型是 .stl，供扫码下载，不在此页渲染）
+        // 预览图用 3D/ 目录下的渲染图（比旧的扁平合成图更立体）
         const modelDisplay = document.getElementById('model-display');
-        modelDisplay.src = `static/xixi_diy/${c}_cloth_o${o}.png`;
+        modelDisplay.src = `static/xixi_diy/3D/${c}_cloth_o${o}.png`;
 
         // 确认按钮把 task 带到 takeaway
         function goTakeaway() { location.href = 'takeaway.html?task=' + encodeURIComponent(task); }

@@ -10,10 +10,15 @@
  */
 
 const GEN_WORK_DIR = "/Users/hefei/Desktop/MX_intern/OC3D";
-const GEN_USE_MOCK = true; // true=占位零额度；false=真调 Meshy（耗额度）
+const GEN_USE_MOCK = false; // true=占位零额度；false=真调 Meshy（耗额度）
 // 固定用带齐依赖(requests/trimesh)的解释器——Agent 默认 python3 可能是系统版、缺 requests。
 // 本机 conda base；换机器时改这里。
 const GEN_PYTHON = "/opt/anaconda3/bin/python3";
+
+// 诊断用：脚本一加载就在控制台报告当前 mock 状态，避免浏览器缓存旧脚本时肉眼难以察觉
+// （之前遇到过：改了 GEN_USE_MOCK 但浏览器还在跑缓存的旧版本，等生成完才发现跑错）。
+console.log(`%c[OC3D prompt.generate.js] 已加载 | GEN_USE_MOCK=${GEN_USE_MOCK} | 加载时间=${new Date().toLocaleTimeString()}`,
+  `font-size:14px;font-weight:bold;color:${GEN_USE_MOCK ? "orange" : "green"};background:#000;padding:4px 8px;`);
 
 function buildGenPrompt(comboId, taskId) {
   const mockFlag = GEN_USE_MOCK ? " --mock" : "";

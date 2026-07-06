@@ -22,8 +22,8 @@
 浏览器 → FastAPI（`main.py`）：
 - `POST /api/generate {ip_id}` → 建任务，返回 task_id
 - `GET  /api/status/{id}` → 任务状态（前端轮询进度）
-- `GET  /api/download/{id}` → 发 STL 文件
-- `GET  /api/qr/{id}` → 返回二维码 PNG（编码下载链接）
+- `GET  /api/download/{id}` → 发 bundle.zip（模型 model.stl + 生成时用的正视图 front.*，一起打包）
+- `GET  /api/qr/{id}` → 返回二维码 PNG（编码下载链接，指向 bundle.zip）
 - `GET  /api/gateway-token` → 读本机 OpenClaw 配置返回 gateway token（前端动态取，不写死）
 - `WS /ws/gateway` → 浏览器↔OpenClaw Gateway 透明代理；`WS /ws/task/{id}` → 状态推送
 - 页面通过路由/静态挂载提供；入口 `/` → `select.html`
@@ -31,7 +31,7 @@
 核心文件：
 | 文件 | 职责 |
 |---|---|
-| `generate_3d.py` | **升维适配器（可插拔）**。`--combo 3_2`（衣3+配2）→ 取合成图 → Meshy multi-image → 下 STL → 等比缩到 ~10cm。`--task-id` 把进度写进 `task_state`。`--mock` 零额度出占位立方体。`presets/<combo>.stl` 命中则复用（零额度）。`--image <png>` 单图直测。未来换模型只改内部 `_meshy_generate`。 |
+| `generate_3d.py` | **升维适配器（可插拔）**。`--combo 3_2`（衣3+配2）→ 取合成图 → Meshy multi-image → 下 STL → 等比缩到 ~10cm → 打包成 `bundle.zip`（model.stl + 源正视图 front.*）→ 上传 OSS（若配置）。`--task-id` 把进度写进 `task_state`。`--mock` 零额度出占位立方体。`presets/<combo>.stl` 命中则复用（零额度）。`--image <png>` 单图直测。未来换模型只改内部 `_meshy_generate`。 |
 | `combos.json` | 搭配注册表，**7×7**（衣 0-6 × 配 0-6，0=经典原皮/卸下配饰）。合成图 `static/xixi_diy/{cloth}_cloth_o{ornament}.png`。 |
 | `static/prompt.generate.js` | `buildGenPrompt(comboId, taskId)` 构造发给 Agent 的升维指令。`GEN_USE_MOCK` 开关（true=mock）。 |
 | `static/gateway.js` | `GatewayChat` 类；连接时先 `fetch('/api/gateway-token')` 取 token。 |
@@ -56,14 +56,17 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8080   # 终端2
 - 换装规模**对齐 master 到 7×7** + 搬入全套合成图素材。
 - gateway token **动态取**（不写死进仓库）；连接时序 bug 已修。
 - STL **高度归一化 ~10cm**。
+- **下载内容改为 bundle.zip**：`model.stl` + 生成时喂给模型的正视图 `front.*` 一起打包，`/api/download`、`/api/qr`、OSS 上传均已改为发/传这个 zip（不再是裸 STL）。已用 mock 验证打包逻辑正确。
+- **一体机 MetaX C500 环境探测 + TripoSG 端到端跑通**（真实推理成功，见第 8 节），按用户指示暂停在此、不继续推进。
 
 ## 5. 待办（TODO）
 
-1. **真 Meshy 全流程验证**：把 `static/prompt.generate.js` 的 `GEN_USE_MOCK` 改 `false`，从换装 UI 完整走一遍，确认经 Agent 真调 Meshy 出 STL + 二维码。（`.meshy_key` 已配好；⚠️ 耗额度，见约束，只跑 1~2 次）
-2. **预烤缓存**：对要展示的搭配逐个跑 `generate_3d.py` 生成 STL 存入 `presets/`，现场走缓存零额度。
-3. **修 select.html 右半门面图**：现引用 `/ips/1.png、2.png、3.png`——文件不存在，且 `/ips` 路径未被后端服务。需放到 `static/ips/` 并把 `src` 改成 `static/ips/N.png`（或对齐 master 的 select.html 看是否已修）。
-4. **前端页面对齐 master**：`select.html / preview_diy.html / takeaway.html` 目前是 updata 版 + 我们接线；master 整合后可能有更新，需对齐（`customize.html` 已是 master 7×7 版 + 接线）。
-5. **换模型（未来）**：Meshy → 一体机本地开源模型（TRELLIS/Hunyuan3D 等），只改 `generate_3d.py` 内部升维函数，其余不动。
+1. **真 Meshy 全流程验证（当前重点）**：`GEN_USE_MOCK` 已改回 `false`，需从换装 UI 完整走一遍，确认经 Agent 真调 Meshy 出 bundle.zip（模型+正视图）+ 二维码。（`.meshy_key` 已配好；⚠️ 耗额度，只跑 1~2 次）
+2. **重新完整测试打印半**：确认唤醒经典（打印）路径走通（本次会话决定先测这个/或先测 Meshy，二选一，具体以当次沟通为准）。
+3. **预烤缓存**：对要展示的搭配逐个跑 `generate_3d.py` 生成 bundle 存入 `presets/`，现场走缓存零额度。
+4. **修 select.html 右半门面图**：现引用 `/ips/1.png、2.png、3.png`——文件不存在，且 `/ips` 路径未被后端服务。需放到 `static/ips/` 并把 `src` 改成 `static/ips/N.png`（或对齐 master 的 select.html 看是否已修）。
+5. **前端页面对齐 master**：`select.html / preview_diy.html / takeaway.html` 目前是 updata 版 + 我们接线；master 整合后可能有更新，需对齐（`customize.html` 已是 master 7×7 版 + 接线）。
+6. **一体机接入**：暂停中，见第 8 节"下一步"。换模型只改 `generate_3d.py` 内部升维函数，其余不动。
 
 ## 6. 在等什么
 
@@ -80,17 +83,45 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8080   # 终端2
 - **密钥不进仓库**：`MESHY_API_KEY`、gateway token、`.meshy_key` 均已 gitignore；token 走 `/api/gateway-token` 动态取，`.meshy_key` 本地文件。
 - **升维适配器保持可插拔**：换模型只动 `generate_3d.py` 内部，对外契约（`--combo/--task-id/--out-dir` + 输出 `✅ Generated:`）不变。
 
-## 8. 一体机接入（本地升维模型）计划
+## 8. 一体机接入（本地升维模型）现状（2026-07-06）
 
-现场用一体机（128GB VRAM，Linux）跑**本地开源升维模型**替掉 Meshy（零额度、离线）。
+**结论先行：TripoSG 在这台 MetaX C500 一体机上已跑通端到端真实推理，验证成功。** 目前**按用户指示暂不继续推进/不碰一体机**，生成半测试转回用 Meshy（真实云端），一体机保持现状待命。
 
-**连接**：Mac 无法上内网 → **网线直连一体机**（点对点）。设静态 IP（如 Mac `192.168.100.1/24`、一体机 `192.168.100.2/24`），`ssh 用户@192.168.100.2`。Mac 保留 Wi-Fi 上网 + 以太网连一体机，两者并行。
+### 硬件与网络
+- 一体机：**MetaX C500**（沐曦国产卡，非 NVIDIA），64GB 显存，Ubuntu 22.04.5，内核 5.19。
+- 连接方式：USB 转网口适配器 + 网线，Mac↔一体机点对点直连。**Mac 侧** `USB 10/100 LAN 2` 静态 IP `192.168.100.1/24`；**一体机侧**网卡 `enx0c3d5e61cd09` 静态 IP `192.168.100.2/24`（`sudo ip addr add ...`，非持久化，重启会丢，需要的话应写入 netplan/systemd-networkd 配置）。延迟 <1ms。
+- 登录：`ssh user@192.168.100.2`，密码见本机记录（不写入仓库）。
+- **一体机内置网口（`eno1`, 10.6.8.219/24）虽有网关但访问不了外网**（隔离内网，ping 公网 IP 100% 丢包）——所有软件/权重必须现在 Mac 上下载，再 scp 传过去。
 
-**步骤**（连通后）：
-1. SSH 上一体机，确认环境：`nvidia-smi`（GPU/驱动/CUDA）、python/conda、磁盘空间、能否联网下权重。
-2. 选并装开源图生 3D 模型（TRELLIS / Hunyuan3D / TripoSR），跑通"单图 → 3D（.stl/.glb）"。
-   - ⚠️ 权重是 GB 级：一体机能联网就直接下；离线则在能上网的机器下好再 `scp` 过去。
-3. 把 `generate_3d.py` 的 `_meshy_generate` 换成"SSH 到一体机跑本地模型 → 取回 STL"（对外契约不变，前端/提示词/后端都不动）。
-4. 一体机模型对外接口约定：输入合成图（单图），输出 STL；`generate_3d.py` 负责 scp 图上去 + ssh 触发 + scp STL 回来。
+### 环境验证结果
+- MACA 驱动/SDK **完整安装**（版本 3.7.2.0），编译器 `mxcc` 正常（`/opt/maca-3.7.2/mxgpu_llvm/bin/mxcc`）。
+- 本机已有两个现成 Docker 镜像（之前工程师跑 LLM 推理留下的）：
+  - `cr.metax-tech.com/public-ai-release/maca/sglang:0.5.10-maca.ai3.7.1.12-torch2.8-py310-ubuntu22.04-amd64`（用的这个）
+  - `cr.metax-tech.com/public-ai-release/maca/vllm-metax:0.20.0-maca.ai3.7.0.107-torch2.8-py312-ubuntu22.04-amd64`
+  - 镜像内 torch 装在 `/opt/conda/bin/python`（不是默认 `python3`，容器默认 PATH 是系统 python，没有 torch，需显式用 conda 那个）。
+  - **真实 GPU 计算验证通过**：`torch 2.8.0+metax3.7.1.4`，`torch.cuda.is_available()=True`，矩阵乘法在 `MetaX C500` 上真实跑通。
 
-**待定/在等**：一体机具体型号与系统、是否联网、SSH 凭据、最终选哪个开源模型。
+### TripoSG 端到端跑通记录
+- 持久容器 `triposg-dev`（`docker run -d --name triposg-dev -v /home/user/triposg_transfer:/workspace ... sleep infinity`，未加 `--rm`，装好的东西不会因退出丢失）。
+- 依赖来源：Mac 下载 55 个 pip wheel（**排除 torch/torchvision/numpy**，避免覆盖容器已验证版本）+ TripoSG 源码 + 两个 HF 权重仓库（`VAST-AI/TripoSG` 7.7GB、`briaai/RMBG-1.4` 803MB）+ `diso` 源码包，一起打包 7.8GB tar.gz，`scp` 传输，MD5 校验后解压。
+- **踩过的坑与解法**：
+  - `opencv-python` 最新版要求 `numpy>=2`，与容器已有 `numpy 1.26.4` 冲突 → 换成 `opencv-python==4.9.0.80`（要求 `numpy>=1.21.2`，兼容）。
+  - `diso`（Differentiable Dual Marching Cubes，网格提取用的自定义 CUDA 扩展）**用 MACA 的 `mxcc` 直接编译成功**——这是最大的风险项，结果比预期顺利，无需 skimage 备用方案。
+  - `diffusers`（任何版本）都 import 已被新版 `transformers`(5.x) 移除的 `FLAX_WEIGHTS_NAME` 常量 → 在推理脚本里 monkeypatch 补一个占位值，不降级 `transformers`。
+  - 降级 `transformers` 到 4.x 又会跟容器自带的 `huggingface-hub 1.17.0`（新版）冲突（4.x 要求 `hub<1.0`）→ 索性不降级，保留新版 `transformers`，靠上面的 monkeypatch 解决。
+  - `transformers` 新版要求 `safetensors>=0.8.0`，容器原有 `0.7.0` → 升级到 `0.8.0`（这个安全，不像 numpy/torch 那样有 ABI 风险）。
+- **真实推理结果**：用项目里的换装合成图（`static/xixi_diy/1_cloth_o1.png`）测试，30 步扩散推理 + diso 网格提取，产出 **607,964 顶点、1,215,888 面**的真实网格，导出 `.glb`（21MB），已拉回 Mac 桌面查看。
+
+### 下一步（用户明确表示现在不做，按下暂停，等以后再启动）
+- 把 `generate_3d.py` 的 `_meshy_generate` 换成"SSH 到一体机 `triposg-dev` 容器跑 TripoSG → 取回 STL"，对外契约不变。
+- 一体机上的静态 IP 配置需要持久化（重启会丢）。
+- 评估是否需要更高贴图质量（Hunyuan3D-2.1，见下方风险表，仅 shape 阶段风险较低，texture 阶段未验证）。
+- 之前的模型选型评估表仍然有效：
+
+| 模型 | 依赖 | MetaX 风险 | 结论 |
+|---|---|---|---|
+| **TripoSG** | 纯 PyTorch/Diffusers，`pip install` 即可 | 🟢 最低 | **已验证跑通**，见上 |
+| Hunyuan3D-2.1 | shape 阶段纯 Diffusers；texture 阶段自定义 CUDA 光栅化扩展 | 🟡 中等 | 未测试，若要更高贴图质量可评估 |
+| TRELLIS | 需编译 7 个 CUDA 扩展，含 NVIDIA 自家库 kaolin | 🔴 最高 | 不考虑 |
+
+许可证核实：Hunyuan3D-2.1 商用限制是月活>100万才需授权（展会 demo 不受影响），但不适用于欧盟/英国/韩国。

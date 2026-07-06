@@ -7,9 +7,11 @@ generate_3d.py — 换装升维适配器（占位/跑通阶段：Meshy 后端，
   python3 generate_3d.py --combo 3_2 --task-id <tid> --out-dir work/<tid> [--mock]
   或快速直测单图： python3 generate_3d.py --image <png> --out-dir <dir>
 
-  → 产出 <out-dir>/model.stl；成功打印 "✅ Generated: <path>"，失败 "❌ ..." 非零退出。
+  → 产出 <out-dir>/model.stl + <out-dir>/bundle.zip（model.stl + 当时喂给模型的正视图 front.*）；
+     成功打印 "✅ Generated: <path>"，失败 "❌ ..." 非零退出。
+     二维码/下载提供的是 bundle.zip（模型和源图一起打包），不是裸 STL。
 
-流程：combo → 预渲染合成图（static/xixi_diy/{衣}_cloth_o{配}.png，直接当单图）→ 升维 → STL。
+流程：combo → 预渲染合成图（static/xixi_diy/{衣}_cloth_o{配}.png，直接当单图）→ 升维 → STL → 打包正视图。
 （合成图由前端预渲染，故不再运行时叠图层，compose_views.py 已弃用。）
 
 进度：给了 --task-id 就把升维进度写进 work/<tid>_state.json（前端轮询 /api/status 显示进度条）。
@@ -106,8 +108,23 @@ def _normalize_size(stl_path, target_mm):
         print(f"  ⚠️ 缩放跳过: {e}")
 
 
-def _oss_upload(stl_path, task_id):
-    """若配置了 .oss.json，把 STL 上传到阿里云 OSS，返回可公网下载的预签名 URL；
+def _make_bundle(out_dir, out_stl, source_image):
+    """把 model.stl 和当时喂给升维模型的正视图打包成 bundle.zip（用户扫码下载时两者都要）。"""
+    import zipfile
+    bundle_path = os.path.join(out_dir, "bundle.zip")
+    with zipfile.ZipFile(bundle_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(out_stl, arcname="model.stl")
+        if source_image and os.path.exists(source_image):
+            ext = os.path.splitext(source_image)[1] or ".png"
+            zf.write(source_image, arcname=f"front{ext}")
+        else:
+            print(f"  ⚠️ 未找到源图 {source_image}，bundle 里只有模型")
+    print(f"  已打包: {bundle_path}")
+    return bundle_path
+
+
+def _oss_upload(file_path, task_id):
+    """若配置了 .oss.json，把文件（bundle.zip）上传到阿里云 OSS，返回可公网下载的预签名 URL；
     否则返回 None（回退局域网模式）。凭据只从 .oss.json（gitignored）读，不进仓库。"""
     cfg_path = os.path.join(BASE, ".oss.json")
     if not os.path.exists(cfg_path):
@@ -122,9 +139,10 @@ def _oss_upload(stl_path, task_id):
         import oss2
         auth = oss2.Auth(c["access_key_id"], c["access_key_secret"])
         bucket = oss2.Bucket(auth, "https://" + c["endpoint"], c["bucket"])
-        key = f"models/{task_id or os.path.basename(os.path.dirname(stl_path))}.stl"
+        ext = os.path.splitext(file_path)[1]
+        key = f"models/{task_id or os.path.basename(os.path.dirname(file_path))}{ext}"
         print(f"  ☁️ 上传 OSS: {key} ...")
-        bucket.put_object_from_file(key, stl_path)
+        bucket.put_object_from_file(key, file_path)
         expire = int(c.get("url_expire_days", 7)) * 86400
         # 预签名 GET URL（bucket 保持私有，链接带时限）；slashes_safe 让 URL 直接可用
         url = bucket.sign_url("GET", key, expire, slash_safe=True)
@@ -135,9 +153,11 @@ def _oss_upload(stl_path, task_id):
         return None
 
 
-def _finalize(out_stl, target_mm, task_id=None):
+def _finalize(out_stl, target_mm, task_id=None, source_image=None):
     _normalize_size(out_stl, target_mm)
-    oss_url = _oss_upload(out_stl, task_id)
+    out_dir = os.path.dirname(out_stl)
+    bundle_path = _make_bundle(out_dir, out_stl, source_image)
+    oss_url = _oss_upload(bundle_path, task_id)
     if oss_url and task_id:
         # 写进 task_state，供 /api/qr、/api/download 用（set_status 合并保留）
         try:
@@ -246,22 +266,22 @@ def main():
 
     _progress(args.task_id, 5, "升维生成中…")
 
-    # 缓存命中（按 combo）→ 零额度
-    if args.combo:
-        cached = os.path.join(PRESETS_DIR, f"{args.combo}.stl")
-        if os.path.exists(cached):
-            shutil.copyfile(cached, out_stl)
-            print(f"  缓存命中: {cached}")
-            _finalize(out_stl, args.max_mm, args.task_id)
-            return
-
-    # 确定输入图（combo → 预渲染合成图；或直接 --image）
+    # 确定输入图（combo → 预渲染合成图；或直接 --image）——bundle 打包和 Meshy 调用都要用
     if args.image:
         img = os.path.abspath(args.image)
         if not os.path.exists(img):
             _fail(f"图片不存在: {img}")
     else:
         img = _composite_path(args.combo)
+
+    # 缓存命中（按 combo）→ 零额度
+    if args.combo:
+        cached = os.path.join(PRESETS_DIR, f"{args.combo}.stl")
+        if os.path.exists(cached):
+            shutil.copyfile(cached, out_stl)
+            print(f"  缓存命中: {cached}")
+            _finalize(out_stl, args.max_mm, args.task_id, source_image=img)
+            return
 
     if mock:
         _mock_stl(out_stl)
@@ -270,7 +290,7 @@ def main():
 
     if not os.path.exists(out_stl):
         _fail("未产出 STL")
-    _finalize(out_stl, args.max_mm, args.task_id)
+    _finalize(out_stl, args.max_mm, args.task_id, source_image=img)
 
 
 if __name__ == "__main__":

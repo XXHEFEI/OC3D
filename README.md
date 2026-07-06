@@ -156,13 +156,41 @@ Agent 只负责**按顺序启动命令并等待结束**，不做额外操作：
 | `static/prompt.js` `WORK_DIR`/`SKILLS_DIR`/`STOCK_DIR` | `/Users/hefei/.../OC3D` | 本机仓库根目录（打印半）|
 | `static/prompt.js` `PRINTER_IP`/`PRINTER_SERIAL`/`ACCESS_CODE` | `172.20.10.6` 等 | 现场打印机的 IP/序列号/访问码 |
 | `main.py` `/api/gateway-token` 兜底 | `~/Desktop/openclaw-home` | 优先用环境变量 `OPENCLAW_HOME`；启动脚本已 export，改这个即可 |
+| `scripts/启动OC3D换装Demo.command` | `OPENCLAW_BIN`/`OPENCLAW_HOME_DIR`/`PROJECT_DIR` | 本机绝对路径；换机器要改这三个变量。**用时需复制到桌面双击**（.command 文件从 Finder 里跑才有终端窗口，直接在仓库目录里双击体验不好） |
+| `scripts/停止OC3D换装Demo.command` | 无路径依赖，只按端口号 kill 进程 | 一般不用改，除非端口号变了 |
+| `scripts/启动一体机TripoSG容器.command` | `AIO_IP`(`192.168.100.2`)/`AIO_USER`(`user`)/`SSH_KEY`(`~/.ssh/id_ed25519_aio`)/`CONTAINER`(`triposg-dev`) | 换一体机或换网络方案要改这四个变量 |
 
-**不在仓库内（gitignore / 桌面，各机器自建）：**
+**不在仓库内（gitignore / 各机器自建，且换机器/换一体机时需要重新配置，不是简单复制文件就行）：**
 
 - `.oss.json`（阿里云 OSS 凭据，各机器填自己的；模板见 `.oss.json.example`）
 - `.meshy_key`（Meshy API key，各机器自己放）
-- 桌面 `启动OC3D换装Demo.command` / `停止OC3D换装Demo.command`：里面 `OPENCLAW_BIN`/`OPENCLAW_HOME_DIR`/`PROJECT_DIR` 是本机绝对路径，换机器要改（脚本本身不在仓库，需各机器自备）
+- `~/.ssh/id_ed25519_aio`（Mac→一体机的专用 SSH 私钥，**私钥本身绝不能进仓库**）。换一体机需要重新走一遍：
+  1. `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_aio -N ""` 生成新 key
+  2. `ssh-copy-id -i ~/.ssh/id_ed25519_aio.pub user@<一体机IP>` 装到新一体机
+  3. 一体机上装一条精确授权的 sudoers 规则（只允许免密执行 `docker start <容器名>` 和裸 `docker ps`，不要开放整个 docker 组/sudo 权限），示例见下方"一体机运维"一节
+  4. 一体机的静态 IP 也要用 `nmcli` 重新配置并设 `autoconnect yes`（不要只用临时的 `ip addr add`，重启会丢）
 
 **依赖**：generate_3d.py 需要 `requests`、`trimesh`、`Pillow`、`oss2`；且必须装在 `GEN_PYTHON` 指向的那个解释器里（Agent 默认的系统 python3 可能没装 → 会 `ModuleNotFoundError`）。
 
 **gateway token**：不用改——前端 `gateway.js` 运行时从 `/api/gateway-token` 动态取本机 OpenClaw 配置里的 token，不写死。
+
+## 一体机运维（网线直连 + 免密启动容器）
+
+一体机（MetaX C500，详见 `TODO.md` 第 8 节）与 Mac 网线直连、跑 TripoSG 的 Docker 容器。以下是重启/换机时要恢复的配置（均不在仓库里，是一体机/Mac 本机状态）：
+
+**一体机侧：静态 IP 持久化**（用 NetworkManager，不要只用临时的 `ip addr add`，否则重启会丢）：
+```bash
+sudo nmcli connection modify <连接名> ipv4.method manual ipv4.addresses 192.168.100.2/24
+sudo nmcli connection modify <连接名> connection.autoconnect yes
+sudo nmcli connection up <连接名>
+```
+
+**一体机侧：精确授权的 sudoers 规则**（只让免密执行这两条命令，不开放整个 docker 组/sudo 权限）：
+```
+# /etc/sudoers.d/oc3d-docker-start（权限须是 root:root 0440，务必先用 visudo -c -f 验证语法再安装）
+user ALL=(root) NOPASSWD: /snap/bin/docker start <容器名>
+user ALL=(root) NOPASSWD: /snap/bin/docker ps
+```
+（`docker` 的实际路径视安装方式而定，snap 装的通常在 `/snap/bin/docker`；sudoers 按精确字符串匹配，多加参数如 `docker ps -a` 不会命中这条规则，是有意为之的最小权限设计。）
+
+**Mac 侧**：`scripts/启动一体机TripoSG容器.command` 用上面配置的 SSH key + sudoers 规则，一键 SSH 过去拉起容器，不需要手动敲命令。

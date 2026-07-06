@@ -1,7 +1,7 @@
 {
   "_说明": "复制本文件为 .oss.json（已 gitignore，不进仓库），填入 RAM 用户的 AccessKey。配了就走云上传，二维码指向公网可下的 OSS 链接；没配则回退局域网模式。RAM 用户需有 OSS 权限(如 AliyunOSSFullAccess)。",
   "endpoint": "oss-cn-shanghai.aliyuncs.com",
-  "bucket": "3d-model-waic",
+  "bucket": "my-3d-assets",
   "access_key_id": "填 RAM 用户 AccessKey ID",
   "access_key_secret": "填 RAM 用户 AccessKey Secret",
   "url_expire_days": 7

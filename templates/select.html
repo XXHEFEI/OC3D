@@ -195,16 +195,16 @@
 <body>
 
     <div class="top-bar">
-        <div class="station-title">MetaX 空间站</div>
+        <div class="station-title">“龙虾套餐”: 体验多智能体协作</div>
         <img src="static/images/meta_logo.png" alt="Logo" class="logo">
     </div>
 
     <div class="split-container" id="container">
         
-        <!-- 左侧：经典唤醒 -->
+        <!-- 左侧：速印工坊 -->
         <div class="panel panel-left" onmouseenter="updateCat('left')" onclick="location.href='select_classic.html'">
             <div class="panel-content">
-                <div class="panel-title">唤醒经典</div>
+                <div class="panel-title">速印工坊</div>
                 <div class="panel-desc">展柜里都是目前呼声最高的经典款！每一只都超上镜，选一个最合眼缘的当场带走！</div>
                 <div class="tag-wrap">
                     <span class="tag" style="color:#00d9ff; border: 1px solid #00d9ff;">现场出舱</span>
@@ -252,7 +252,7 @@
         <div class="center-hub">
             <div class="hub-bg"></div>
             <div id="cat-bubble" class="guide-bubble">
-                喵呜~ 欢迎来到 MetaX 空间站！<br>准备好见证奇迹了吗？<br>试着把手移到两边看看~
+                喵呜~ 欢迎来到龙虾套餐体验馆！<br>准备好见证奇迹了吗？<br>试着把手移到两边看看~
             </div>
             <img id="cat-img" src="static/images/cat.gif" alt="向导猫咪" class="guide-cat">
         </div>
@@ -269,7 +269,7 @@
 
         container.addEventListener('mouseleave', () => {
             catImg.src = CAT_DEFAULT_GIF;
-            bubble.innerHTML = '喵呜~ 欢迎来到 MetaX 空间站！<br>准备好见证奇迹了吗？<br>试着把手移到两边看看~';
+            bubble.innerHTML = '喵呜~ 欢迎来到龙虾套餐体验馆！<br>准备好见证奇迹了吗？<br>试着把手移到两边看看~';
         });
 
         function updateCat(side) {

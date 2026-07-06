@@ -81,6 +81,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def _no_cache_dev_assets(request, call_next):
+    """开发阶段强制不缓存页面/脚本，避免浏览器拿着旧版本跑（之前 GEN_USE_MOCK
+    改了但版本号没同步 bump，导致浏览器一直用缓存的旧脚本，白跑了一次)。
+    正式上线若要恢复缓存，删掉这段中间件即可。"""
+    response = await call_next(request)
+    if request.url.path.endswith((".js", ".html")) or request.url.path == "/":
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/ips", StaticFiles(directory=str(IP_IMAGES_DIR)), name="ips")
 
@@ -202,20 +214,26 @@ def api_download(task_id: str):
     state = task_state.get_status(task_id)
     if state.get("status") != "done":
         raise HTTPException(400, "Task not ready")
-    # 有云链接则直接跳转到 OSS（公网可下）
+    # 有云链接则直接跳转到 OSS（公网可下；生成半上传的是 bundle.zip，含模型+源图）
     if state.get("oss_url"):
         return RedirectResponse(state["oss_url"])
-    # 生成半产出 work/{task_id}/model.stl；打印半产出 .3mf。两者都支持。
+    # 生成半产出 work/{task_id}/bundle.zip（模型+源图）；打印半产出 .3mf。都支持。
     task_dir = WORK_DIR / task_id
     files = (
-        list(task_dir.glob("*.stl"))
+        list(task_dir.glob("*.zip"))
+        + list(task_dir.glob("*.stl"))
         + list(task_dir.glob("*.3mf"))
         + list(BASE.glob("*.3mf"))
     )
     if not files:
         raise HTTPException(404, "model file not found")
     path = files[0]
-    media = "model/stl" if path.suffix.lower() == ".stl" else "application/vnd.ms-3mf"
+    if path.suffix.lower() == ".zip":
+        media = "application/zip"
+    elif path.suffix.lower() == ".stl":
+        media = "model/stl"
+    else:
+        media = "application/vnd.ms-3mf"
     return FileResponse(path, filename=path.name, media_type=media)
 
 
