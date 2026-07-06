@@ -125,3 +125,38 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8080   # 终端2
 | TRELLIS | 需编译 7 个 CUDA 扩展，含 NVIDIA 自家库 kaolin | 🔴 最高 | 不考虑 |
 
 许可证核实：Hunyuan3D-2.1 商用限制是月活>100万才需授权（展会 demo 不受影响），但不适用于欧盟/英国/韩国。
+
+## 9. 打印侧接入清单（2026-07-06 调研，明天开工直接照做）
+
+目标：把 master 分支的"唤醒经典"（打印半）接进 macos 分支。已对比 master/updata 与我们本地差异，逐项标注是否有写死路径需要改。**不要盲目整体覆盖文件——main.py/static/prompt.js 我们这边有自己的改动，需要合并而不是覆盖。**
+
+### ✅ 已经一致，直接忽略
+- `monitor_bridge.py`、`bambu-studio-ai/` skill 目录——和 master 逐字节相同，不用动。
+
+### ✅ 纯数据/纯前端，可以直接拿 master 版覆盖（无写死路径）
+- `ips/list.json`：master 已是真实数据（云栖懒猫→云朵小猫.gcode.3mf、弹力萌猫→弹簧小猫.gcode.3mf、喵星指环→戒指小猫.gcode.3mf、端坐奶猫→CatKeychain.gcode.3mf），我们这边还是旧占位（costume_1/2/painter）。**直接拿 master 版覆盖。**
+- `templates/select_classic.html`、`preview_classic.html`、`printing_classic.html`、`finish_classic.html`、`index.html`、`print.html`、`printing.html`、`finish.html`：逐一 grep 过 `C:\`、`/Users/`、IP 地址，**全部 0 命中**，纯前端调相对路径 API，可以直接复制进来，不用改。
+
+### ⚠️ 需要手动合并/重写（路径 + 架构都要动，不能简单复制）
+
+**`static/prompt.js`**——master 这边不只是路径不同，是做了一次真正的架构升级，务必按新逻辑重写，不要只套用旧模板改改路径：
+1. 函数签名变了：`buildPrompt(costume, taskId)` → `buildPrintPrompt(modelName, taskId, modelFile)`（`printing_classic.html` 已按新签名调用，见其第160行 `buildPrintPrompt(modelName, task_id, modelFile)`）。
+2. 打印形象数据不再写死在 prompt.js 里的 COSTUMES 数组，改成前端从 `/api/list-ips`（读 `ips/list.json`）动态拉取，`select_classic.html`/`preview_classic.html` 负责把 modelName/modelFile 一路传到 printing_classic.html。
+3. **监控方式改成非阻塞后台**（这是真正的改进，解决了我们早前担心的"Agent 长阻塞命令超时"风险）：master 用 PowerShell 的 `Start-Process -NoNewWindow python -ArgumentList ...` 把 `monitor_bridge.py --interval 15` 丢到后台立即返回，Agent 不等打印完成就继续往下走，报"监控已就位"就收尾；真正的 done/failed 由 monitor_bridge.py 自己后台跑完后写 task_state（monitor_bridge.py 本身已确认和 master 一致，自己就有这个逻辑，不用改它）。**移植到 Mac 时 `Start-Process` 要换成 bash 的 `nohup ... > /tmp/xxx.log 2>&1 & disown` 达到同样的"后台启动、立即返回"效果。**
+4. 写死的路径/IP 要换成我们自己的（不是抄 master 的）：
+   - `WORK_DIR`/`SKILLS_DIR`/`STOCK_DIR`：master 是 `C:\Users\i26293\Desktop\ip-print-web...`（同事 Windows 路径），换成我们的 `/Users/hefei/Desktop/MX_intern/OC3D`（我们自己 `static/prompt.js` 现有版本已经是这个，可以参考）。
+   - `PRINTER_IP`：master 是 `10.238.235.64`（同事的网络环境），**不要用这个**，换成我们实测过的 `172.20.10.6`。
+   - bash 语法（`export BAMBU_MODE=...`）而不是 PowerShell（`$env:BAMBU_MODE = ...`），我们现有版本已经是 bash，可参考。
+
+**`main.py`**——好消息：合并工作量比想象中小。
+- master 版 main.py（227 行，比我们的 383 行少）**完全没有** `/api/print`、`bambu.py` 调用、`discover_printer` 逻辑——他们把"实际发送打印指令"这个动作也挪到了 Agent 直接执行（和我们 `generate_3d.py` 由 Agent 直接跑是同一种模式），不是后端 subprocess 调用。
+- master 用的是逐页显式路由（`@app.get("/select_classic.html")` 这种，每个页面一条），我们用的是 `StaticFiles(directory=TEMPLATES, html=True)` 通配挂载——我们的挂载方式本来就会自动服务任何丢进 `templates/` 的 html 文件，**大概率不需要新增任何路由**，只要把 classic 页面文件复制进 `templates/` 目录就会自动生效。
+- `/api/list-ips` 我们已经有，语义应该兼容，复制 `ips/list.json` 后验证一下返回格式对不对即可。
+- 我们自己在 main.py 加的 `/api/qr`、`/api/download`（bundle.zip）、`/api/gateway-token`、no-cache 中间件都要保留，**不要用 master 版覆盖 main.py**，只需确认 classic 页面用到的路由我们都已支持。
+
+### 明天开工建议顺序
+1. `ips/list.json` 直接覆盖成 master 版（纯数据，无风险）。
+2. 四个 classic 页面 + `index.html`/`print.html`/`printing.html`/`finish.html` 直接复制进 `templates/`（无写死路径，验证完自动被 StaticFiles 挂载服务）。
+3. 重写 `static/prompt.js`：采纳新架构（动态数据 + `Start-Process`→`nohup`后台监控），路径/IP 换成我们自己的（不要抄 master 的 Windows 路径和同事的打印机 IP）。
+4. 跑一遍验证：`select.html` 左半"唤醒经典" → 选形象 → 打印 → 后台监控非阻塞、能正确收到 done/failed。
+5. 检查 `main.py` 是否有遗漏路由（大概率不需要新增）。
