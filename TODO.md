@@ -79,3 +79,18 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8080   # 终端2
 - **Meshy 额度很少**：开发一律用 `--mock`；真 Meshy 只在必要时少量跑。
 - **密钥不进仓库**：`MESHY_API_KEY`、gateway token、`.meshy_key` 均已 gitignore；token 走 `/api/gateway-token` 动态取，`.meshy_key` 本地文件。
 - **升维适配器保持可插拔**：换模型只动 `generate_3d.py` 内部，对外契约（`--combo/--task-id/--out-dir` + 输出 `✅ Generated:`）不变。
+
+## 8. 一体机接入（本地升维模型）计划
+
+现场用一体机（128GB VRAM，Linux）跑**本地开源升维模型**替掉 Meshy（零额度、离线）。
+
+**连接**：Mac 无法上内网 → **网线直连一体机**（点对点）。设静态 IP（如 Mac `192.168.100.1/24`、一体机 `192.168.100.2/24`），`ssh 用户@192.168.100.2`。Mac 保留 Wi-Fi 上网 + 以太网连一体机，两者并行。
+
+**步骤**（连通后）：
+1. SSH 上一体机，确认环境：`nvidia-smi`（GPU/驱动/CUDA）、python/conda、磁盘空间、能否联网下权重。
+2. 选并装开源图生 3D 模型（TRELLIS / Hunyuan3D / TripoSR），跑通"单图 → 3D（.stl/.glb）"。
+   - ⚠️ 权重是 GB 级：一体机能联网就直接下；离线则在能上网的机器下好再 `scp` 过去。
+3. 把 `generate_3d.py` 的 `_meshy_generate` 换成"SSH 到一体机跑本地模型 → 取回 STL"（对外契约不变，前端/提示词/后端都不动）。
+4. 一体机模型对外接口约定：输入合成图（单图），输出 STL；`generate_3d.py` 负责 scp 图上去 + ssh 触发 + scp STL 回来。
+
+**待定/在等**：一体机具体型号与系统、是否联网、SSH 凭据、最终选哪个开源模型。
