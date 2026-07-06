@@ -1,23 +1,21 @@
 {
-  "_comment": "换装搭配注册表，规模跟随 master：衣服 0-6、配饰 0-6，共 7×7=49。id 0 表示无（衣0=经典原皮，配0=卸下配饰）。前端预渲染合成图直喂升维模型，统一命名 static/xixi_diy/{cloth}_cloth_o{ornament}.png（含 0_cloth_o0.png）。combo id = \"{cloth}_{ornament}\"，如 3_2 = 衣3+配2、0_0 = 原皮无配饰。名称与 templates/customize.html 的 wardrobeData 一致。",
+  "_comment": "换装搭配注册表，规模跟随 master：衣服 0-5、配饰 0-5，共 6×6=36。id 0 表示无（衣0=经典原皮，配0=卸下配饰）。前端预渲染合成图直喂升维模型，统一命名 static/xixi_diy/{cloth}_cloth_o{ornament}.png（含 0_cloth_o0.png）。combo id = \"{cloth}_{ornament}\"，如 3_2 = 衣3+配2。名称与 templates/customize.html 的 wardrobeData 一致。",
   "composite_dir": "static/xixi_diy",
   "composite_pattern": "{cloth}_cloth_o{ornament}.png",
   "clothes": [
     {"id": 0, "name": "经典原皮"},
     {"id": 1, "name": "元气背带"},
-    {"id": 2, "name": "清新西装"},
-    {"id": 3, "name": "艺术工坊"},
-    {"id": 4, "name": "星空法师"},
-    {"id": 5, "name": "宇航漫步"},
-    {"id": 6, "name": "甜心制服"}
+    {"id": 2, "name": "艺术工坊"},
+    {"id": 3, "name": "星空法师"},
+    {"id": 4, "name": "宇航漫步"},
+    {"id": 5, "name": "甜心制服"}
   ],
   "ornaments": [
     {"id": 0, "name": "卸下配饰"},
     {"id": 1, "name": "出游装备"},
-    {"id": 2, "name": "暖冬套装"},
-    {"id": 3, "name": "大师画板"},
-    {"id": 4, "name": "魔法装备"},
-    {"id": 5, "name": "太空配件"},
-    {"id": 6, "name": "甜心小包"}
+    {"id": 2, "name": "大师画板"},
+    {"id": 3, "name": "魔法装备"},
+    {"id": 4, "name": "太空配件"},
+    {"id": 5, "name": "甜心小包"}
   ]
 }

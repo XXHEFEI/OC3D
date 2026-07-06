@@ -10,7 +10,10 @@
  */
 
 const GEN_WORK_DIR = "/Users/hefei/Desktop/MX_intern/OC3D";
-const GEN_USE_MOCK = true; // true=占位零额度；false=真调 Meshy
+const GEN_USE_MOCK = true; // true=占位零额度；false=真调 Meshy（耗额度）
+// 固定用带齐依赖(requests/trimesh)的解释器——Agent 默认 python3 可能是系统版、缺 requests。
+// 本机 conda base；换机器时改这里。
+const GEN_PYTHON = "/opt/anaconda3/bin/python3";
 
 function buildGenPrompt(comboId, taskId) {
   const mockFlag = GEN_USE_MOCK ? " --mock" : "";
@@ -38,7 +41,7 @@ set_status('${taskId}', 'running', step='generating', progress=5, message='升�
 此命令阻塞运行直到出文件，耐心等待，不要中断、不要并发。
 \`\`\`bash
 cd "${GEN_WORK_DIR}"
-python3 "${GEN_WORK_DIR}/generate_3d.py" --combo ${comboId} --task-id ${taskId} --out-dir "${GEN_WORK_DIR}/work/${taskId}"${mockFlag}
+${GEN_PYTHON} "${GEN_WORK_DIR}/generate_3d.py" --combo ${comboId} --task-id ${taskId} --out-dir "${GEN_WORK_DIR}/work/${taskId}"${mockFlag}
 \`\`\`
 - 输出含「✅ Generated」→ 执行步骤 3。
 - 失败 → 立即执行并停止：

@@ -47,7 +47,7 @@
         }
         @keyframes hover-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         
-        /* 主图：保留过渡效果，用于透明度的瞬间消失和浮现 */
+        /* 主图 */
         .stage-model { 
             max-width: 90%; max-height: 100%; 
             object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); 
@@ -89,10 +89,10 @@
         .item-btn.active { background: rgba(255,65,108,0.2); border-color: #ff416c; box-shadow: 0 0 15px rgba(255,65,108,0.3); }
         .item-btn.active::after { content: '✓'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #ff416c; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;}
 
-        /* 常规图片缩略图样式（统一使用白底） */
+        /* 常规图片缩略图样式 */
         .item-thumb { width: 75px; height: 75px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; background: #fff; padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);}
         
-        /* 专属保留：配饰用的“卸下/取消”科技感虚线框图标 */
+        /* 专属保留：配饰用的“卸下/取消” */
         .cancel-thumb { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: rgba(255, 65, 108, 0.05); margin-bottom: 10px; border: 2px dashed rgba(255, 65, 108, 0.5); border-radius: 8px; color: #ff416c;}
 
         .item-name { font-size: 16px; color: #eee; font-weight: bold; letter-spacing: 1px;}
@@ -115,7 +115,7 @@
         <div class="left-stage">
             <div class="stage-title">
                 <h2>AI 重构预览</h2>
-                <p>Qwen 算力引擎实时渲染中...</p>
+                <p>实时渲染中...</p>
             </div>
             
             <div class="model-wrapper">
@@ -152,37 +152,31 @@
     </div>
 
     <script src="static/gateway.js?v=2"></script>
-    <script src="static/prompt.generate.js?v=2"></script>
+    <script src="static/prompt.generate.js?v=3"></script>
     <script>
+        // 完全重推后的数据，绝对对应 0-5 逻辑
         const wardrobeData = {
             cloth: [
-                // 经典原皮现在使用纯衣服图 0.jpg
-                { id: 0, name: "经典原皮", thumb: "static/xixi_diy/cloth/0.png", desc: "回归最纯粹的数字形态！清爽自在喵~" },
+                { id: 0, name: "经典原皮", thumb: "static/xixi_diy/cloth/0.jpg", desc: "回归最纯粹的数字形态！清爽自在喵~" },
                 { id: 1, name: "元气背带", thumb: "static/xixi_diy/cloth/1.png", desc: "经典的蓝白格子背带裤，充满童趣与活力喵！" },
-                { id: 2, name: "清新西装", thumb: "static/xixi_diy/cloth/2.png", desc: "哇哦！浅蓝色小西装，非常干练有型，气质满分！" },
-                { id: 3, name: "艺术工坊", thumb: "static/xixi_diy/cloth/3.png", desc: "沾满颜料的围裙，看来你准备好创作旷世杰作了！" },
-                { id: 4, name: "星空法师", thumb: "static/xixi_diy/cloth/4.png", desc: "魔法能量涌动！这件法师袍充满神秘的星空力量！" },
-                { id: 5, name: "宇航漫步", thumb: "static/xixi_diy/cloth/5.png", desc: "准备好进行太空漫步了吗？宇航服密封性检查完毕！" },
-                { id: 6, name: "甜心制服", thumb: "static/xixi_diy/cloth/6.png", desc: "甜度超标啦！粉色制服绝对是全场最吸睛的搭配喵~" }
+                { id: 2, name: "艺术工坊", thumb: "static/xixi_diy/cloth/2.png", desc: "沾满颜料的围裙，看来你准备好创作旷世杰作了！" },
+                { id: 3, name: "星空法师", thumb: "static/xixi_diy/cloth/3.png", desc: "魔法能量涌动！这件法师袍充满神秘的星空力量！" },
+                { id: 4, name: "宇航漫步", thumb: "static/xixi_diy/cloth/4.png", desc: "准备好进行太空漫步了吗？宇航服密封性检查完毕！" },
+                { id: 5, name: "甜心制服", thumb: "static/xixi_diy/cloth/5.png", desc: "甜度超标啦！粉色制服绝对是全场最吸睛的搭配喵~" }
             ],
             accessory: [
-                // 配饰恢复为卸下按键 (isCancel: true)
                 { id: 0, name: "卸下配饰", isCancel: true, desc: "摘下多余的装饰，轻装上阵也不错！" },
                 { id: 1, name: "出游装备", thumb: "static/xixi_diy/ornament/1.png", desc: "搭配上这套遮阳配饰，出游感立马拉满！" },
-                { id: 2, name: "暖冬套装", thumb: "static/xixi_diy/ornament/2.png", desc: "戴上围巾手套，冬日里的温暖氛围出来了！" },
-                { id: 3, name: "大师画板", thumb: "static/xixi_diy/ornament/3.png", desc: "拿上这块调色板，你就是空间站最靓的艺术家！" },
-                { id: 4, name: "魔法装备", thumb: "static/xixi_diy/ornament/4.png", desc: "神秘的配件加持，感觉能召唤出小精灵呢！" },
-                { id: 5, name: "太空配件", thumb: "static/xixi_diy/ornament/5.png", desc: "硬核的科技配件，保障你的每一次星际探索！" },
-                { id: 6, name: "甜心小包", thumb: "static/xixi_diy/ornament/6.png", desc: "精致迷人的配饰包包，装满了甜蜜的梦喵！" }
+                { id: 2, name: "大师画板", thumb: "static/xixi_diy/ornament/2.png", desc: "拿上这块调色板，你就是空间站最靓的艺术家！" },
+                { id: 3, name: "魔法装备", thumb: "static/xixi_diy/ornament/3.png", desc: "神秘的配件加持，感觉能召唤出小精灵呢！" },
+                { id: 4, name: "太空配件", thumb: "static/xixi_diy/ornament/4.png", desc: "硬核的科技配件，保障你的每一次星际探索！" },
+                { id: 5, name: "甜心小包", thumb: "static/xixi_diy/ornament/5.png", desc: "精致迷人的配饰包包，装满了甜蜜的梦喵！" }
             ]
         };
 
         let currentTab = 'cloth';
-        
-        // 全局状态：0代表什么都不穿（即原皮）
         let selectedCloth = 0;
         let selectedOrnament = 0;
-        
         let isRendering = false;
         let gw = null;  // OpenClaw Gateway 连接，点封装时按需连接
 
@@ -212,7 +206,6 @@
                 const div = document.createElement('div');
                 div.className = `item-btn ${currentSelectedId === item.id ? 'active' : ''}`;
                 
-                // 如果是配饰里的“卸下配饰”，渲染特殊的取消样式
                 if (item.isCancel) {
                     div.innerHTML = `
                         <div class="cancel-thumb">🚫</div>
@@ -230,11 +223,8 @@
             });
         }
 
-        // 绝对路径组合规则 (主舞台图片)
+        // 最纯粹的组合逻辑，完全摒弃任何多余判断
         function getImagePath(c, o) {
-            if (c === 0 && o === 0) return 'static/xixi_diy/0_cloth_o0.png';
-            if (c === 0 && o !== 0) return `static/xixi_diy/0_cloth_o${o}.png`;
-            if (c !== 0 && o === 0) return `static/xixi_diy/${c}_cloth_o0.png`;
             return `static/xixi_diy/${c}_cloth_o${o}.png`;
         }
 
@@ -266,17 +256,14 @@
             cat.src = 'static/images/cat_guide.png';
             bubble.innerHTML = `<span style="color:#00F0FF; font-weight:bold;">正在同步算力空间...</span><br>剥离旧网格并投射新图层！`;
 
-            // 瞬间消失
             mainImg.style.opacity = '0';
             mainImg.style.transform = 'scale(0.9)'; 
             laser.style.display = 'block';
 
-            // 提前预加载
             const newImgPath = getImagePath(selectedCloth, selectedOrnament);
             const preloader = new Image();
             preloader.src = newImgPath;
 
-            // 等待 1.2 秒后强制浮现新图
             setTimeout(() => {
                 mainImg.src = newImgPath;
                 mainImg.style.opacity = '1';
