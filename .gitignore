@@ -27,3 +27,6 @@ testCat*.png
 
 # 阿里云 OSS 凭据(不进仓库)
 .oss.json
+
+# 脚本自动生成的备份文件
+*.bak

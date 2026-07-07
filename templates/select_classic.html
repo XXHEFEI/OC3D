@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaX 空间站 - 速印工坊</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #050508; color: #fff;
+            height: 100vh; overflow: hidden; display: flex;
+            background: radial-gradient(circle at center, #0a0a14 0%, #050508 100%);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ==== 顶栏 ==== */
+        .top-bar {
+            position: absolute; top: 50px; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 80px;
+            z-index: 100; pointer-events: none; align-items: center;
+        }
+        .station-title {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-size: 40px; font-weight: 900; letter-spacing: 4px;
+            background: linear-gradient(135deg, #00F0FF 0%, #0072FF 50%, #B562FF 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.4));
+        }
+        .logo { height: 45px; opacity: 0.9; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));}
+        
+        .back-btn { 
+            pointer-events: auto; background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); color: #fff; 
+            padding: 12px 30px; border-radius: 30px; cursor: pointer; 
+            backdrop-filter: blur(10px); transition: 0.3s; font-size: 18px; font-weight: bold;
+        }
+        .back-btn:hover { background: rgba(0,240,255,0.15); border-color: #00F0FF; box-shadow: 0 0 15px rgba(0,240,255,0.3);}
+
+        /* ==== 主体布局 ==== */
+        .layout { display: flex; width: 100%; height: 100%; padding-top: 100px; }
+        
+        /* 左侧：陈列柜 - 恢复居中对齐，因为2行内容变高，居中反而能让标题处于最佳偏上位置 */
+        .left-panel { flex: 5.5; padding: 40px 80px; display: flex; flex-direction: column; justify-content: center; position: relative;}
+        
+        /* 柔和的背景光晕 */
+        .left-panel::before {
+            content: ''; position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,217,255,0.05) 0%, transparent 60%);
+            top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; pointer-events: none;
+        }
+
+        .section-title { font-size: 50px; font-weight: bold; color: #00d9ff; margin-bottom: 15px; text-shadow: 0 0 30px rgba(0, 217, 255, 0.4); z-index: 10;}
+        .section-desc { font-size: 20px; color: #bbb; margin-bottom: 30px; letter-spacing: 2px; z-index: 10;}
+
+        /* 网格容器：增加最大宽度限制，防止宽屏下卡片被拉得过长导致图片被裁切 */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 25px; 
+            z-index: 10;
+            max-width: 760px; /* 关键修复：限制网格总宽度 */
+        }
+        
+        /* 玻璃质感模型卡片 */
+        .model-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.25, 1, 0.25, 1);
+            position: relative; backdrop-filter: blur(15px);
+        }
+        .model-card:hover { transform: translateY(-8px); background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.3); }
+        .model-card.active { transform: translateY(-10px); background: rgba(0, 240, 255, 0.1); border-color: #00F0FF; box-shadow: 0 15px 40px rgba(0, 240, 255, 0.25); }
+        
+        /* 选中状态的小对勾 */
+        .model-card.active::before { 
+            content: '✓'; position: absolute; top: -12px; right: -12px; width: 36px; height: 36px; 
+            background: #00F0FF; color: #000; font-size: 22px; font-weight: bold; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px #00F0FF; 
+        }
+
+        /* 调整图片高度，配合网格最大宽度，呈现正常的比例 */
+        .model-card img { 
+            width: 100%; 
+            height: 190px; /* 适当调高，避免过扁 */
+            object-fit: cover; 
+            object-position: center; /* 确保裁切时以中心为主 */
+            border-radius: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
+        }
+        .model-name { font-size: 22px; font-weight: bold; color: #fff; letter-spacing: 2px;}
+
+        /* 右侧：向导中枢 */
+        .right-panel { flex: 4.5; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.05); background: radial-gradient(circle at 100% 50%, rgba(0,217,255,0.05) 0%, transparent 100%); }
+        
+        .guide-cat { width: 320px; filter: drop-shadow(0 0 25px rgba(255,255,255,0.1)); margin-bottom: 40px; transition: 0.3s; }
+        
+        .guide-bubble { 
+            background: rgba(15, 15, 25, 0.95); backdrop-filter: blur(15px);
+            border: 2px solid #555; padding: 25px 40px; border-radius: 20px; 
+            color: #eee; font-size: 24px; text-align: center; line-height: 1.6; 
+            margin-bottom: 60px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); 
+            position: relative; transition: all 0.4s; letter-spacing: 1px;
+        }
+        .guide-bubble::after { 
+            content: ''; position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); 
+            border-top: 14px solid #555; border-left: 14px solid transparent; border-right: 14px solid transparent; transition: border-color 0.4s;
+        }
+
+        .action-btn { 
+            padding: 24px 80px; border-radius: 50px; font-size: 26px; font-weight: bold; 
+            border: none; color: white; cursor: pointer; transition: all 0.3s; 
+            background: rgba(255,255,255,0.1); color: #666; pointer-events: none; letter-spacing: 2px;
+        }
+        /* 选中模型后按钮激活的样式 */
+        .action-btn.ready { background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; box-shadow: 0 10px 30px rgba(0, 198, 255, 0.4); pointer-events: auto; }
+        .action-btn.ready:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 198, 255, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="back-btn" onclick="location.href='select.html'">← 返回空间站枢纽</button>
+        <div class="station-title">MetaX 空间站</div>
+        <img src="static/images/meta_logo.png" alt="Logo" class="logo">
+    </div>
+
+    <div class="layout">
+        <div class="left-panel">
+            <div class="section-title">速印工坊</div>
+            <div class="section-desc">舱内已锁定以下最高人气形态，请选中您要带走的守护灵。</div>
+            
+            <div class="grid-container" id="grid-container"></div>
+        </div>
+
+        <div class="right-panel">
+            <div id="guide-bubble" class="guide-bubble">
+                喵呜~ 经典现货展柜已经开启！<br>看看这几个小家伙，哪个最让你心动？
+            </div>
+            <img id="guide-cat" src="static/images/cat.gif" class="guide-cat">
+            
+            <button id="next-btn" class="action-btn" onclick="goToPreview()">请先选择目标形态</button>
+        </div>
+    </div>
+
+    <script>
+        let currentIP = null;
+
+        async function loadIPs() {
+            try {
+                const res = await fetch('/api/list-ips');
+                const ips = await res.json();
+
+                const grid = document.getElementById('grid-container');
+                grid.innerHTML = ips.map(ip => `
+                    <div class="model-card" data-id="${ip.id}" onclick="selectModel(this, '${ip.id}')">
+                        <img src="${ip.image}" alt="${ip.name}">
+                        <div class="model-name">${ip.name}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('grid-container').innerHTML =
+                    '<div style="color:#888;padding:40px;text-align:center;">加载失败，请刷新重试</div>';
+            }
+        }
+
+        function selectModel(card, ipId) {
+            document.querySelectorAll('.model-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            const res = fetch('/api/list-ips').then(r => r.json()).then(ips => {
+                currentIP = ips.find(ip => ip.id === ipId);
+                if (!currentIP) return;
+
+                const bubble = document.getElementById('guide-bubble');
+                const cat = document.getElementById('guide-cat');
+                cat.src = 'static/images/cat_guide.png';
+
+                bubble.style.borderColor = "#00d9ff";
+                bubble.innerHTML = `目标锁定：<span style="color:#00F0FF; font-weight:bold;">【${currentIP.name}】</span><br>${currentIP.desc || ''}`;
+
+                const btn = document.getElementById('next-btn');
+                btn.classList.add('ready');
+                btn.innerText = "进入 3D 预览舱";
+            });
+        }
+
+        function goToPreview() {
+            if (!currentIP) return;
+            location.href = `preview_classic.html?name=${encodeURIComponent(currentIP.name)}&img=${encodeURIComponent(currentIP.image)}&id=${encodeURIComponent(currentIP.id)}&model=${encodeURIComponent(currentIP.model)}`;
+        }
+
+        loadIPs();
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实体打印进行中...</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #050508; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+        .container { width: 95vw; height: 88vh; background: radial-gradient(circle at center, #101020 0%, #050508 100%); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 30px rgba(0, 217, 255, 0.1); border: 1px solid #1a1a2e; }
+        .logo { position: absolute; top: 40px; right: 40px; width: 160px; opacity: 0.8; z-index: 50; }
+
+        /* 左右布局的包裹容器 */
+        .layout-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 60px; /* 左右间距 */
+            width: 100%;
+        }
+
+        /* === 左侧：超大突出打印状态的面板 === */
+        .print-card {
+            background: rgba(0, 240, 255, 0.05);
+            border: 2px solid #00d9ff;
+            border-radius: 24px;
+            padding: 50px;
+            position: relative;
+            width: 650px;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.15);
+        }
+        
+        /* 指向右侧猫咪的箭头 */
+        .print-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -25px; /* 箭头在右侧 */
+            transform: translateY(-50%);
+            border-left: 25px solid #00d9ff;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+        }
+
+        /* 突出“打印中”的标题 */
+        .print-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .highlight {
+            color: #00F0FF;
+            font-size: 46px;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+        }
+
+        .print-sub {
+            font-size: 20px;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .print-desc {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 45px;
+            line-height: 1.6;
+        }
+
+        /* 无限循环的流光状态条（代替具体时间） */
+        .status-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 18px;
+            color: #00d9ff;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(0, 217, 255, 0.3); border-top-color: #00d9ff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-wrapper {
+            width: 100%; height: 12px; background: #1a1a2e; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid #333;
+        }
+        
+        /* 跑马灯光效 */
+        .progress-flow {
+            width: 40%; height: 100%;
+            background: linear-gradient(90deg, transparent, #00d9ff, #ff416c, transparent);
+            position: absolute;
+            border-radius: 10px;
+            animation: flow 2s infinite linear;
+        }
+        @keyframes flow {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+
+        /* === 右侧：缩小的思考猫咪 === */
+        .cat-image { 
+            width: 400px; /* 猫咪变小 */
+            height: auto; 
+            z-index: 10; 
+            animation: float 4s ease-in-out infinite; 
+            filter: drop-shadow(0 0 25px rgba(0, 217, 255, 0.2)); 
+        }
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-15px); } 
+            100% { transform: translateY(0px); } 
+        }
+
+        /* === 右下角极度弱化的 Next 按钮 === */
+        .next-btn { 
+            position: absolute; 
+            bottom: 25px; 
+            right: 35px; 
+            background: transparent; 
+            color: rgba(255, 255, 255, 0.15); /* 极低透明度，近乎隐形 */
+            border: none; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            z-index: 100;
+            padding: 10px;
+        }
+        .next-btn:hover { 
+            color: rgba(255, 255, 255, 0.6); /* 鼠标悬停才稍微亮起 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="static/images/meta_logo.png" alt="MetaX Logo" class="logo" />
+
+        <div class="layout-wrapper">
+            <div class="print-card">
+                <div class="print-title">✨ 实体 <span class="highlight">3D 打印</span>进行中</div>
+                <div class="print-sub">模型已成功送达，打印机高速运转中...</div>
+                <div class="print-desc">
+                    慢工出细活，好作品值得等待，请大家不要着急哟喵~ ☕
+                </div>
+
+                <div class="status-box">
+                    <div class="spinner"></div>
+                    模型物理构建中
+                </div>
+                <div class="progress-wrapper">
+                    <div class="progress-flow"></div>
+                </div>
+            </div>
+
+            <img src="static/images/cat_think.png" alt="曦曦正在等待" class="cat-image" />
+        </div>
+
+        <button class="next-btn" onclick="goToFinish()">Next</button>
+    </div>
+
+    <script>
+        function goToFinish() {
+            // 携带参数进入最终页
+            const urlParams = new URLSearchParams(window.location.search);
+            const ipName = urlParams.get('name') || '';
+            const ipImg = urlParams.get('img') || '';
+            location.href = `finish.html?name=${encodeURIComponent(ipName)}&img=${encodeURIComponent(ipImg)}`;
+        }
+    </script>
+</body>
+</html>

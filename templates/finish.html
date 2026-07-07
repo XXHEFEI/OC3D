@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打印大功告成！</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
+            background: #050508; 
+            color: #fff; 
+            min-height: 100vh; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 20px; overflow: hidden; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* 高级深邃空间背景 */
+        .container { 
+            width: 95vw; height: 88vh; 
+            background: radial-gradient(circle at 40% 50%, #121220 0%, #050508 100%); 
+            border-radius: 24px; display: flex; overflow: hidden; position: relative; 
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+
+        .logo { position: absolute; top: 40px; right: 40px; width: 160px; opacity: 0.8; z-index: 100;}
+
+        /* ================= 左侧：优雅的模型展台 ================= */
+        .left-showcase { 
+            width: 45%; height: 100%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; position: relative; 
+        }
+        
+        /* 悬浮模型的容器 */
+        .model-wrapper {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* 纯粹干净的悬浮与光影特效 */
+        .stage-img { 
+            height: 480px; z-index: 10; object-fit: contain; 
+            animation: elegant-float 4s ease-in-out infinite; 
+            /* 模型自带的高级发光感 */
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 25px rgba(0, 240, 255, 0.2));
+        }
+        
+        @keyframes elegant-float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-18px); } 
+            100% { transform: translateY(0px); } 
+        }
+        
+        /* 极简的高光氛围底座 */
+        .elegant-pedestal {
+            width: 320px; height: 35px;
+            background: radial-gradient(ellipse at center, rgba(0,240,255,0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            margin-top: -10px;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+            animation: pedestal-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pedestal-pulse {
+            0% { opacity: 0.6; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.6; transform: scale(0.95); }
+        }
+
+        /* 底部模型名称 */
+        .ip-title { 
+            margin-top: 30px; font-size: 32px; font-weight: bold; 
+            color: #fff; z-index: 20; letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+        }
+
+        /* ================= 右侧：大功告成面板区 ================= */
+        .right-action { 
+            width: 55%; height: 100%; display: flex; 
+            align-items: center; justify-content: center; position: relative; 
+        }
+
+        /* 包含卡片和猫咪的相对定位容器 */
+        .action-wrapper {
+            position: relative;
+            width: 100%; max-width: 600px;
+            display: flex; align-items: center;
+        }
+
+        /* 磨砂黑金质感的结算卡片 */
+        .success-card {
+            background: rgba(20, 20, 25, 0.75); 
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.3); 
+            border-top: 2px solid rgba(255, 215, 0, 0.6); /* 顶部高光边 */
+            padding: 50px 60px; 
+            border-radius: 24px; 
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(255, 215, 0, 0.05);
+            z-index: 5;
+        }
+
+        .highlight-gold { 
+            font-size: 42px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px;
+            background: linear-gradient(90deg, #FFFFFF 0%, #FFD700 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .success-text {
+            color: #dcdcdc; font-size: 20px; line-height: 2; margin-bottom: 45px;
+        }
+
+        .btn-home { 
+            background: linear-gradient(90deg, #00c6ff, #0072ff); 
+            color: white; border: none; padding: 20px 0; width: 100%; border-radius: 40px; 
+            font-size: 24px; font-weight: bold; cursor: pointer; letter-spacing: 2px;
+            box-shadow: 0 8px 25px rgba(0, 198, 255, 0.4); transition: all 0.3s; 
+        }
+        .btn-home:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 35px rgba(0, 198, 255, 0.6); }
+
+        /* ====== 绝妙的猫咪排版：站在卡片外侧，手指指向卡片 ====== */
+        .success-cat { 
+            position: absolute; 
+            right: -130px; /* 让猫咪探出卡片边缘 */
+            bottom: -40px; /* 脚踩在底部 */
+            width: 360px; 
+            height: auto; 
+            z-index: 10; 
+            pointer-events: none; /* 防止挡住按钮点击 */
+            filter: drop-shadow(-15px 15px 25px rgba(0,0,0,0.6)) drop-shadow(0 0 25px rgba(255, 215, 0, 0.2));
+            animation: cat-breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes cat-breathe {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="static/images/meta_logo.png" alt="MetaX Logo" class="logo" />
+
+        <div class="left-showcase">
+            <div class="model-wrapper">
+                <img id="final-model" src="" alt="3D模型" class="stage-img">
+                <div class="elegant-pedestal"></div>
+            </div>
+            <div id="final-name" class="ip-title">曦曦</div>
+        </div>
+
+        <div class="right-action">
+            <div class="action-wrapper">
+                
+                <div class="success-card">
+                    <div class="highlight-gold">✨ 大功告成！</div>
+                    <div class="success-text">
+                        打印指令已通过算力集群成功下发！<br>
+                        请移步旁边的 <strong style="color:#00F0FF; font-size: 24px;">打印机</strong>，领取您的实体手办吧！
+                    </div>
+                    <button class="btn-home" onclick="location.href='/'">完成并返回首页</button>
+                </div>
+
+                <img src="static/images/xixi_style_1_transparent.png" alt="大功告成" class="success-cat">
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取并展示上一页的数据
+        const urlParams = new URLSearchParams(window.location.search);
+        const ipName = urlParams.get('name') || '曦曦 · 经典款';
+        const ipImg = urlParams.get('img') || '/ips/1.png'; 
+
+        document.getElementById('final-name').innerText = ipName.replace('-', ' · ');
+        document.getElementById('final-model').src = ipImg;
+    </script>
+</body>
+</html>

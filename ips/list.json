@@ -1,5 +1,6 @@
 [
-  {"id": "costume_1", "name": "换装 1", "image": "/static/ip-costumes/1.png", "model": "cat.gcode.3mf"},
-  {"id": "costume_2", "name": "换装 2", "image": "/static/ip-costumes/2.png", "model": "cat.gcode.3mf"},
-  {"id": "painter", "name": "画家", "image": "/static/ip-costumes/画家.png", "model": "cat.gcode.3mf"}
+  {"id": "classic_lazy_cat", "name": "云栖懒猫", "image": "/static/images/cat_lay.jpg", "model": "云朵小猫.gcode.3mf", "desc": "软乎乎窝在云朵上打呼~打工人的治愈本命，选它超安心喵~"},
+  {"id": "classic_spring_cat", "name": "弹力萌猫", "image": "/static/images/cat_spring.png", "model": "弹簧小猫.gcode.3mf", "desc": "哇哦！弹力十足！打印出来手感一定超级解压喵~"},
+  {"id": "classic_ring_cat", "name": "喵星指环", "image": "/static/images/cat_ring.jpg", "model": "戒指小猫.gcode.3mf", "desc": "太精致了吧！把本喵戴在手上，吸睛率绝对200%！"},
+  {"id": "classic_sitting_cat", "name": "端坐奶猫", "image": "/static/images/cat_base.png", "model": "CatKeychain.gcode.3mf", "desc": "哇！这只大眼萌猫呆萌又乖巧，最适合放在桌面上陪伴你啦喵~"}
 ]

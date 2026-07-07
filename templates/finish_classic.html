@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>打印完成</title>
+    <style>
+        body { font-family: 'PingFang SC', sans-serif; background: #050508; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .container { display: flex; align-items: center; gap: 60px; }
+        
+        /* 模型悬浮展示 */
+        .showcase { display: flex; flex-direction: column; align-items: center; }
+        .final-img { width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,240,255,0.3); border: 2px solid rgba(0,240,255,0.5); animation: float 4s infinite; margin-bottom: 30px;}
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .final-name { font-size: 32px; font-weight: bold; color: #fff; letter-spacing: 2px;}
+
+        /* 成功卡片 */
+        .success-card { background: rgba(20,20,25,0.8); padding: 50px; border-radius: 24px; border: 1px solid rgba(255,215,0,0.4); border-top: 4px solid #FFD700; width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;}
+        .gold-title { font-size: 46px; font-weight: bold; background: linear-gradient(90deg, #fff, #FFD700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+        .desc { font-size: 20px; color: #ddd; line-height: 1.8; margin-bottom: 40px;}
+        
+        .home-btn { width: 100%; padding: 20px; border-radius: 40px; background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; font-size: 24px; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,198,255,0.4);}
+        .home-btn:hover { transform: scale(1.05); }
+
+        .cat-guide { position: absolute; right: -120px; bottom: -30px; width: 280px; pointer-events: none;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="showcase">
+            <img id="f-img" src="" class="final-img">
+            <div id="f-name" class="final-name">加载中</div>
+        </div>
+
+        <div class="success-card">
+            <div class="gold-title">✨ 大功告成！</div>
+            <div class="desc">
+                实体模型已成功出舱！<br>
+                请移步至身旁的 <strong style="color:#00F0FF; font-size: 24px;">3D打印机</strong>，<br>领取您的专属手办吧！
+            </div>
+            <button class="home-btn" onclick="location.href='select.html'">完成并返回枢纽</button>
+            <img src="static/images/xixi_style_1_transparent.png" class="cat-guide">
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        document.getElementById('f-name').innerText = urlParams.get('name') || '经典手办';
+        document.getElementById('f-img').src = urlParams.get('img') || 'static/images/cat_lay.jpg';
+    </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实体打印进行中</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'PingFang SC', sans-serif; background: #08080c; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        
+        .top-bar { position: absolute; top: 40px; right: 60px; z-index: 100; }
+        .logo { height: 30px; opacity: 0.9; }
+
+        .layout { display: flex; align-items: center; justify-content: center; gap: 60px; width: 100%; position: relative;}
+        
+        /* 左侧：打印状态卡片 */
+        .print-card { 
+            background: rgba(0, 240, 255, 0.05); border: 2px solid #00F0FF; 
+            border-radius: 20px; padding: 50px 60px; width: 600px; position: relative; 
+            box-shadow: 0 0 40px rgba(0,240,255,0.1); 
+        }
+        /* 指向右边猫咪的箭头 */
+        .print-card::after { 
+            content: ''; position: absolute; top: 50%; right: -22px; transform: translateY(-50%); 
+            border-left: 22px solid #00F0FF; border-top: 15px solid transparent; border-bottom: 15px solid transparent; 
+        }
+
+        .title { font-size: 36px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px;}
+        .highlight { color: #00F0FF; font-size: 42px; text-shadow: 0 0 15px rgba(0,240,255,0.5); }
+        
+        .desc-1 { font-size: 18px; color: #ddd; margin-bottom: 10px; letter-spacing: 1px;}
+        .desc-2 { font-size: 16px; color: #888; margin-bottom: 50px; letter-spacing: 1px;}
+        
+        .status-box { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; font-size: 18px; color: #00F0FF; font-weight: bold; }
+        /* 转圈的小动画 */
+        .spinner { width: 22px; height: 22px; border: 3px solid rgba(0, 240, 255, 0.2); border-top-color: #00F0FF; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-wrapper { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(0,240,255,0.2);}
+        /* 缓慢变长的进度条 */
+        .progress-fill { width: 5%; height: 100%; background: linear-gradient(90deg, #00F0FF, #ff416c); box-shadow: 0 0 15px #ff416c; transition: width 1s linear; }
+
+        /* 右侧：思考的猫 */
+        .cat-img { width: 350px; filter: drop-shadow(0 0 25px rgba(0,240,255,0.15)); animation: float 4s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* ====== 隐蔽的 Next 按钮 ====== */
+        .next-btn {
+            position: absolute; bottom: 30px; right: 40px;
+            background: transparent; border: none; color: rgba(255,255,255,0.1); /* 非常淡的透明度 */
+            font-size: 16px; cursor: pointer; transition: 0.3s; z-index: 1000;
+        }
+        .next-btn:hover { color: rgba(255,255,255,0.6); }
+
+    </style>
+</head>
+<body>
+    
+    <div class="top-bar">
+        <img src="static/images/meta_logo.png" alt="Logo" class="logo">
+    </div>
+
+    <div class="layout">
+        <div class="print-card">
+            <div class="title">✨ 实体 <span class="highlight">3D 打印</span>进行中</div>
+            <div class="desc-1">模型已成功送达，打印机高速运转中...</div>
+            <div class="desc-2">慢工出细活，好作品值得等待，请大家不要着急哟喵~ ☕</div>
+
+            <div class="status-box">
+                <div class="spinner"></div>
+                <span id="status-text">模型物理构建中</span>
+            </div>
+            
+            <div class="progress-wrapper">
+                <div class="progress-fill" id="p-bar"></div>
+            </div>
+        </div>
+
+        <img src="static/images/cat_think.png" class="cat-img">
+    </div>
+
+    <script src="/static/gateway.js"></script>
+    <script src="/static/prompt.js"></script>
+    <script>
+        // ─── URL 参数 ────────────────────────────────────────────────────
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelName = urlParams.get('name') || '';
+        const modelImg = urlParams.get('img') || '';
+        const ipId = urlParams.get('id') || '';
+        const modelFile = urlParams.get('model') || '';
+
+        // ─── UI 元素 ─────────────────────────────────────────────────────
+        const bar = document.getElementById('p-bar');
+        const statusText = document.getElementById('status-text');
+
+        let gateway = null;
+        let taskWs = null;
+
+        // ─── WebSocket 实时状态 ─────────────────────────────────────────
+        function connectTaskWebSocket(taskId) {
+            if (taskWs) { taskWs.close(); taskWs = null; }
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            taskWs = new WebSocket(`${protocol}//${location.host}/ws/task/${taskId}`);
+
+            taskWs.onmessage = (event) => {
+                try {
+                    const state = JSON.parse(event.data);
+                    if (state.progress !== undefined) {
+                        bar.style.width = Math.min(state.progress, 98) + '%';
+                    }
+                    if (state.message) {
+                        statusText.innerText = state.message;
+                    }
+                    if (state.status === 'done') {
+                        bar.style.width = '100%';
+                        statusText.innerText = state.message || '打印完成！';
+                        setTimeout(() => {
+                            location.href = `finish_classic.html?name=${encodeURIComponent(modelName)}&img=${encodeURIComponent(modelImg)}`;
+                        }, 1500);
+                    } else if (state.status === 'failed') {
+                        statusText.innerText = '打印失败: ' + (state.message || '未知错误');
+                        document.querySelector('.spinner').style.display = 'none';
+                    }
+                } catch (e) { /* ignore */ }
+            };
+
+            taskWs.onclose = () => { taskWs = null; };
+            taskWs.onerror = () => { taskWs = null; };
+        }
+
+        // ─── 启动打印流程 ───────────────────────────────────────────────
+        async function startPrint() {
+            if (!ipId) {
+                statusText.innerText = '未识别的模型: ' + modelName;
+                return;
+            }
+
+            try {
+                statusText.innerText = '正在创建打印任务...';
+                bar.style.width = '2%';
+
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip_id: ipId }),
+                });
+                const { task_id } = await res.json();
+
+                connectTaskWebSocket(task_id);
+
+                statusText.innerText = '正在连接打印网关...';
+                bar.style.width = '5%';
+
+                gateway = new GatewayChat();
+                await gateway.connect();
+
+                statusText.innerText = '模型物理构建中';
+                bar.style.width = '8%';
+
+                await gateway.sendMessage(buildPrintPrompt(modelName, task_id, modelFile));
+
+            } catch (e) {
+                statusText.innerText = '打印任务启动失败: ' + e.message;
+                document.querySelector('.spinner').style.display = 'none';
+            }
+        }
+
+        startPrint();
+    </script>
+</body>
+</html>
