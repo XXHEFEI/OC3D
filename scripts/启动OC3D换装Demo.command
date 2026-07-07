@@ -69,14 +69,14 @@ else
   echo "✅ 后端启动成功"
 fi
 
-# ── 3. 打开换装页 ─────────────────────────────────────────
+# ── 3. 打开落地首页（index.html → 点进 select.html 枢纽 → 左=唤醒经典打印，右=魔法衣橱换装升维）───
 echo
-echo "🌐 打开 http://localhost:$PORT/customize.html ..."
-open "http://localhost:$PORT/customize.html"
+echo "🌐 打开 http://localhost:$PORT/index.html ..."
+open "http://localhost:$PORT/index.html"
 
 echo
 echo "全部启动完成！服务在后台运行，关闭本窗口不影响它们。"
-echo "流程：换装 → 封装 → 预览(真实进度) → 扫码带走。"
+echo "两条路径都可用：左=唤醒经典（选形象→打印）；右=魔法衣橱（换装→封装→预览→扫码带走）。"
 echo "提示：手机扫码需与本机同 Wi-Fi，并用本机局域网 IP 访问（非 localhost）。"
 echo "彻底停止：运行 停止OC3D换装Demo.command"
 echo

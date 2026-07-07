@@ -6,51 +6,225 @@
     <title>实体打印进行中</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'PingFang SC', sans-serif; background: #08080c; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        body { 
+            font-family: 'PingFang SC', 'Helvetica Neue', sans-serif; 
+            background: 
+                radial-gradient(circle at 75% 40%, rgba(255, 65, 108, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 25% 65%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
+                #07050a; 
+            color: #fff; 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
         
         .top-bar { position: absolute; top: 40px; right: 60px; z-index: 100; }
-        .logo { height: 30px; opacity: 0.9; }
+        .logo { height: 32px; opacity: 0.8; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
 
-        .layout { display: flex; align-items: center; justify-content: center; gap: 60px; width: 100%; position: relative;}
-        
-        /* 左侧：打印状态卡片 */
-        .print-card { 
-            background: rgba(0, 240, 255, 0.05); border: 2px solid #00F0FF; 
-            border-radius: 20px; padding: 50px 60px; width: 600px; position: relative; 
-            box-shadow: 0 0 40px rgba(0,240,255,0.1); 
-        }
-        /* 指向右边猫咪的箭头 */
-        .print-card::after { 
-            content: ''; position: absolute; top: 50%; right: -22px; transform: translateY(-50%); 
-            border-left: 22px solid #00F0FF; border-top: 15px solid transparent; border-bottom: 15px solid transparent; 
+        /* 全局大视窗布局：精心调校两部分的比例与间距 */
+        .layout { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 90px; /* 完美的黄金分割间距 */
+            width: 100%; 
+            max-width: 1400px;
+            padding: 0 50px;
         }
 
-        .title { font-size: 36px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px;}
-        .highlight { color: #00F0FF; font-size: 42px; text-shadow: 0 0 15px rgba(0,240,255,0.5); }
-        
-        .desc-1 { font-size: 18px; color: #ddd; margin-bottom: 10px; letter-spacing: 1px;}
-        .desc-2 { font-size: 16px; color: #888; margin-bottom: 50px; letter-spacing: 1px;}
-        
-        .status-box { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; font-size: 18px; color: #00F0FF; font-weight: bold; }
-        /* 转圈的小动画 */
-        .spinner { width: 22px; height: 22px; border: 3px solid rgba(0, 240, 255, 0.2); border-top-color: #00F0FF; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .progress-wrapper { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(0,240,255,0.2);}
-        /* 缓慢变长的进度条 */
-        .progress-fill { width: 5%; height: 100%; background: linear-gradient(90deg, #00F0FF, #ff416c); box-shadow: 0 0 15px #ff416c; transition: width 1s linear; }
-
-        /* 右侧：思考的猫 */
-        .cat-img { width: 350px; filter: drop-shadow(0 0 25px rgba(0,240,255,0.15)); animation: float 4s infinite ease-in-out; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-
-        /* ====== 隐蔽的 Next 按钮 ====== */
-        .next-btn {
-            position: absolute; bottom: 30px; right: 40px;
-            background: transparent; border: none; color: rgba(255,255,255,0.1); /* 非常淡的透明度 */
-            font-size: 16px; cursor: pointer; transition: 0.3s; z-index: 1000;
+        /* ================= 左侧部分：实体3D打印模块 ================= */
+        .print-section {
+            flex: 0 0 900px; /* 放大到1.5倍 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInHUD 1s ease-out forwards;
         }
-        .next-btn:hover { color: rgba(255,255,255,0.6); }
+
+        .print-card {
+            width: 100%;
+            min-height: 480px;
+            background: rgba(13, 20, 30, 0.6);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-top: 3px solid rgba(0, 240, 255, 0.85);
+            border-radius: 24px;
+            padding: 80px 60px;
+            box-shadow: 0 25px 55px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(0, 240, 255, 0.04);
+        }
+
+        .huge-title { 
+            font-size: 52px; 
+            font-weight: 800; 
+            margin-bottom: 40px; 
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            color: #fff;
+        }
+        
+        .huge-title .h-text { 
+            color: #00F0FF;
+            text-shadow: 0 0 30px rgba(0,240,255,0.35);
+        }
+
+        .hud-desc { font-size: 28px; color: #d1d6e6; margin-bottom: 22px; letter-spacing: 1.5px; line-height: 1.6; }
+        .hud-sub { font-size: 24px; color: #828899; margin-bottom: 70px; letter-spacing: 1px; line-height: 1.5; }
+        
+        .status-module { margin-top: 40px; }
+        .status-header { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 28px; 
+            font-size: 28px; 
+            color: #00F0FF; 
+            font-weight: 600; 
+            letter-spacing: 1.5px;
+        }
+
+        .laser-track { 
+            width: 100%; 
+            height: 10px; 
+            background: rgba(255, 255, 255, 0.07); 
+            border-radius: 10px; 
+            position: relative; 
+            overflow: hidden;
+        }
+        .laser-beam { 
+            width: 5%; 
+            height: 100%; 
+            background: linear-gradient(90deg, transparent, #00F0FF, #fff); 
+            box-shadow: 0 0 20px #00F0FF; 
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-radius: 10px;
+        }
+
+        /* ================= 右侧部分：曦曦与对话框模块 ================= */
+        .character-section {
+            flex: 0 0 440px; /* 曦曦与气泡整体作为另一部分，并调小到和谐比例 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px; /* 对话框与猫咪之间的和谐间距 */
+            animation: slideInRight 1s cubic-bezier(0.25, 1, 0.25, 1) forwards;
+        }
+
+        .character-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: floatCat 4.5s infinite ease-in-out; /* 整体带呼吸感联动浮动 */
+        }
+
+        /* === 极品空间红色晕光对话框 === */
+        .glass-panel {
+            position: relative; 
+            width: 100%;
+            background: rgba(22, 14, 24, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 65, 108, 0.35); /* 粉红精致外框 */
+            border-radius: 18px;
+            padding: 28px 32px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.55), inset 0 0 20px rgba(255, 65, 108, 0.06), 0 0 35px rgba(255, 65, 108, 0.12);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* 完美契合下方猫咪中心的指示小尖角 */
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-top: 14px solid rgba(255, 65, 108, 0.4);
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+        }
+
+        .glass-panel.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .typewriter-text {
+            font-size: 14px;
+            color: #f2f2f7;
+            line-height: 1.75;
+            letter-spacing: 0.8px;
+            min-height: 90px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .btn-wrapper {
+            height: 36px;
+            width: 100%;
+        }
+
+        .diy-btn {
+            display: none; 
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(255, 65, 108, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.25, 1);
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        .diy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(255, 65, 108, 0.5), inset 0 1px 0 rgba(255,255,255,0.35);
+        }
+
+        /* 曦曦图层容器 */
+        .cat-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .cat-img { 
+            width: 310px; /* 精确调小猫咪比例，使整体视觉更加均衡协调 */
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6)); 
+            z-index: 5;
+        }
+
+        /* 猫咪底部的科幻淡蓝光晕 */
+        .stage-glow {
+            position: absolute;
+            bottom: -6px;
+            width: 200px;
+            height: 16px;
+            background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.22) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        /* 动画库 */
+        @keyframes floatCat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes fadeInHUD { from { opacity: 0; transform: translateX(-25px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(25px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes popInBtn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
@@ -61,42 +235,95 @@
     </div>
 
     <div class="layout">
-        <div class="print-card">
-            <div class="title">✨ 实体 <span class="highlight">3D 打印</span>进行中</div>
-            <div class="desc-1">模型已成功送达，打印机高速运转中...</div>
-            <div class="desc-2">慢工出细活，好作品值得等待，请大家不要着急哟喵~ ☕</div>
+        
+        <!-- 左侧部分：实体3D打印控制台 -->
+        <div class="print-section">
+            <div class="print-card">
+                <div class="huge-title">✨ 实体 <span class="h-text">3D 打印</span> 进行中</div>
+                <div class="hud-desc">数据矩阵已送达，打印机高速运转中...</div>
+                <div class="hud-sub">正在将虚拟像素转化为物理实体，请耐心等待 ☕</div>
 
-            <div class="status-box">
-                <div class="spinner"></div>
-                <span id="status-text">模型物理构建中</span>
-            </div>
-            
-            <div class="progress-wrapper">
-                <div class="progress-fill" id="p-bar"></div>
+                <div class="status-module">
+                    <div class="status-header">
+                        <span id="status-text">连接物理网关中...</span>
+                    </div>
+                    
+                    <div class="laser-track">
+                        <div class="laser-beam" id="p-bar"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <img src="static/images/cat_think.png" class="cat-img">
+        <!-- 右侧部分：曦曦与对话框大组合 -->
+        <div class="character-section">
+            <div class="character-stage">
+                
+                <!-- 对话气泡部分 -->
+                <div class="glass-panel" id="speech-bubble">
+                    <div class="typewriter-text" id="typewriter-content"></div>
+                    <div class="btn-wrapper">
+                        <button class="diy-btn" id="diy-btn" onclick="location.href='select.html'">返回选择页面</button>
+                    </div>
+                </div>
+                
+                <!-- 曦曦角色部分 -->
+                <div class="cat-wrapper">
+                    <img src="static/images/cat_think.png" class="cat-img" alt="曦曦">
+                    <div class="stage-glow"></div>
+                </div>
+                
+            </div>
+        </div>
+        
     </div>
 
     <script src="/static/gateway.js"></script>
     <script src="/static/prompt.js"></script>
     <script>
-        // ─── URL 参数 ────────────────────────────────────────────────────
+        // ─── 全息气泡打字特效 ───
+        (function initCharacterInteraction() {
+            const bubbleMsg = "喵呜~ 实体打印可是个慢工出细活的魔法，需要一点点时间酝酿哦！✨\n与其在这里盯着进度条，不如先去【魔法衣橱】给我搭几套新穿搭吧？";
+            
+            const contentEl = document.getElementById('typewriter-content');
+            const bubbleEl = document.getElementById('speech-bubble');
+            const btnEl = document.getElementById('diy-btn');
+            let charIndex = 0;
+
+            function typeWriter() {
+                if (charIndex < bubbleMsg.length) {
+                    if (bubbleMsg.charAt(charIndex) === '\n') {
+                        contentEl.innerHTML += '<br>';
+                    } else {
+                        contentEl.innerHTML += bubbleMsg.charAt(charIndex);
+                    }
+                    charIndex++;
+                    setTimeout(typeWriter, 80);
+                } else {
+                    btnEl.style.display = 'block';
+                    btnEl.style.animation = 'popInBtn 0.6s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                }
+            }
+
+            // 延迟滑出面板
+            setTimeout(() => {
+                bubbleEl.classList.add('show');
+                setTimeout(typeWriter, 800); 
+            }, 4000);
+        })();
+
+        // ─── WebSocket 与 打印引擎逻辑 ───
         const urlParams = new URLSearchParams(window.location.search);
         const modelName = urlParams.get('name') || '';
-        const modelImg = urlParams.get('img') || '';
         const ipId = urlParams.get('id') || '';
         const modelFile = urlParams.get('model') || '';
 
-        // ─── UI 元素 ─────────────────────────────────────────────────────
         const bar = document.getElementById('p-bar');
         const statusText = document.getElementById('status-text');
 
         let gateway = null;
         let taskWs = null;
 
-        // ─── WebSocket 实时状态 ─────────────────────────────────────────
         function connectTaskWebSocket(taskId) {
             if (taskWs) { taskWs.close(); taskWs = null; }
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -113,58 +340,61 @@
                     }
                     if (state.status === 'done') {
                         bar.style.width = '100%';
-                        statusText.innerText = state.message || '打印完成！';
-                        setTimeout(() => {
-                            location.href = `finish_classic.html?name=${encodeURIComponent(modelName)}&img=${encodeURIComponent(modelImg)}`;
-                        }, 1500);
+                        statusText.innerText = state.message || '打印成功完毕！';
+                        bar.style.background = 'linear-gradient(90deg, transparent, #00FF88, #fff)'; 
+                        bar.style.boxShadow = '0 0 15px #00FF88';
+                        statusText.style.color = '#00FF88';
+                        // 跳转到 select 枢纽站页面
+                        setTimeout(() => { location.href = 'select.html'; }, 2000);
                     } else if (state.status === 'failed') {
-                        statusText.innerText = '打印失败: ' + (state.message || '未知错误');
-                        document.querySelector('.spinner').style.display = 'none';
+                        statusText.innerText = state.message || '网关连接超时，请联系管理员';
+                        statusText.style.color = '#00F0FF';
+                        bar.style.background = 'rgba(255,255,255,0.1)'; 
+                        bar.style.boxShadow = 'none';
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) { console.error(e); }
             };
-
             taskWs.onclose = () => { taskWs = null; };
             taskWs.onerror = () => { taskWs = null; };
         }
 
-        // ─── 启动打印流程 ───────────────────────────────────────────────
         async function startPrint() {
             if (!ipId) {
-                statusText.innerText = '未识别的模型: ' + modelName;
+                statusText.innerText = '网关连接超时，请联系管理员';
+                statusText.style.color = '#00F0FF';
+                bar.style.background = 'rgba(255,255,255,0.1)'; 
+                bar.style.boxShadow = 'none';
                 return;
             }
-
             try {
-                statusText.innerText = '正在创建打印任务...';
-                bar.style.width = '2%';
-
+                statusText.innerText = '正在初始化数据矩阵...';
+                bar.style.width = '10%';
+                
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ip_id: ipId }),
                 });
                 const { task_id } = await res.json();
-
                 connectTaskWebSocket(task_id);
 
-                statusText.innerText = '正在连接打印网关...';
-                bar.style.width = '5%';
-
+                statusText.innerText = '唤醒物理通讯网关...';
+                bar.style.width = '20%';
+                
                 gateway = new GatewayChat();
                 await gateway.connect();
 
-                statusText.innerText = '模型物理构建中';
-                bar.style.width = '8%';
-
+                statusText.innerText = '正在重构物理实体';
+                bar.style.width = '30%';
                 await gateway.sendMessage(buildPrintPrompt(modelName, task_id, modelFile));
-
             } catch (e) {
-                statusText.innerText = '打印任务启动失败: ' + e.message;
-                document.querySelector('.spinner').style.display = 'none';
+                statusText.innerText = '网关连接超时，请联系管理员';
+                statusText.style.color = '#00F0FF';
+                bar.style.background = 'rgba(255,255,255,0.1)'; 
+                bar.style.boxShadow = 'none';
             }
         }
-
+        
         startPrint();
     </script>
 </body>

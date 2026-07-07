@@ -372,8 +372,8 @@ def api_gateway_token():
 
 @app.get("/")
 def index():
-    # 新前端统一入口：select.html（左打印 / 右换装建模）
-    return FileResponse(TEMPLATES / "select.html")
+    # 落地首页：index.html → 点进 select.html 枢纽（左打印 / 右换装建模）
+    return FileResponse(TEMPLATES / "index.html")
 
 
 # 把 templates/ 下的页面按文件名当静态页提供（DIY 多页面流程：
