@@ -45,11 +45,24 @@ loaded = trimesh.load(SRC)
 if isinstance(loaded, trimesh.Scene):
     # 打印工程文件的场景里可能摆了多份同一个模型（批量打印），只取其中一个实例，
     # 不要用 force="mesh" 把摆盘的所有副本拼在一起渲染。
-    mesh = list(loaded.geometry.values())[0]
+    geom_name = list(loaded.geometry.keys())[0]
+    mesh = loaded.geometry[geom_name].copy()
+    # 有些模型建模时的朝向（局部坐标系）跟摆在打印床上的朝向不一致（比如建模时
+    # 立着做，摆盘时转平），场景图里这份实例的变换矩阵记录了这个旋转，不套用的话
+    # 渲染出来的朝向就是建模朝向而不是实际打印朝向。
+    for node in loaded.graph.nodes_geometry:
+        transform, name = loaded.graph[node]
+        if name == geom_name:
+            mesh.apply_transform(transform)
+            break
 else:
     mesh = loaded
 
 print(f"原始网格: {len(mesh.vertices)} 顶点 / {len(mesh.faces)} 面")
+STAGE_FACES = 200000  # 中间过渡目标：一次性抽到 MAX_FACES 比例太极端时 fast_simplification 会异常慢（几十万面几秒，上百万面能卡好几分钟），分两段就快很多
+if len(mesh.faces) > STAGE_FACES:
+    mesh = mesh.simplify_quadric_decimation(face_count=STAGE_FACES)
+    print(f"第一段抽稀: {len(mesh.vertices)} 顶点 / {len(mesh.faces)} 面")
 if len(mesh.faces) > MAX_FACES:
     mesh = mesh.simplify_quadric_decimation(face_count=MAX_FACES)
     print(f"抽稀后: {len(mesh.vertices)} 顶点 / {len(mesh.faces)} 面")
