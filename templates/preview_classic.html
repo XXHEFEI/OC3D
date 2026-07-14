@@ -158,13 +158,11 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const modelName = urlParams.get('name') || '经典款';
-        // model 形如 "云朵小猫黑.gcode.3mf"（含颜色）——来自 ips/list.json 的默认 model（黑）
-        const modelFile = urlParams.get('model') || '';
-
-        // 去掉扩展名和末尾颜色字，得到不含颜色的基名 = 转台帧文件夹名，也是拼打印文件名的前缀
-        // 例："云朵小猫黑.gcode.3mf" → "云朵小猫"；"CatKeychain白.gcode.3mf" → "CatKeychain"
-        const modelBase = modelFile.replace(/\.gcode\.3mf$/i, '').replace(/[黑白]$/, '');
-        const turntableFolder = modelBase;
+        // 打印文件名与转台文件夹名已解耦：
+        //   tt = 转台帧文件夹名（中文，走 HTTP 无碍）；mb/mw = 黑/白打印切片名（纯 ASCII，走 FTP 避免 553）
+        const turntableFolder = urlParams.get('tt') || '';
+        const modelBlack = urlParams.get('mb') || '';
+        const modelWhite = urlParams.get('mw') || '';
         const TOTAL_FRAMES = 37;
         const FRAME_DURATION = 120;
 
@@ -328,8 +326,8 @@
         function confirmPrint() {
             const originalImg = urlParams.get('img') || '';
             const modelId = urlParams.get('id') || '';
-            // 按用户在预览里选中的颜色，拼出对应颜色的切片文件名去打印（黑=…黑.gcode.3mf / 白=…白.gcode.3mf）
-            const printModel = modelBase ? `${modelBase}${currentColor}.gcode.3mf` : modelFile;
+            // 按预览选中的颜色取对应 ASCII 切片名去打印（白=mw / 黑=mb）
+            const printModel = (currentColor === '白') ? modelWhite : modelBlack;
             location.href = `printing_classic.html?name=${encodeURIComponent(modelName)}&img=${encodeURIComponent(originalImg)}&id=${encodeURIComponent(modelId)}&model=${encodeURIComponent(printModel)}&color=${encodeURIComponent(currentColor)}`;
         }
     </script>

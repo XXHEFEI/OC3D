@@ -1,6 +1,6 @@
 [
-  {"id": "classic_lazy_cat", "name": "云栖懒猫", "image": "/static/images/cat_lay.jpg", "model": "云朵小猫黑.gcode.3mf", "models": {"黑": "云朵小猫黑.gcode.3mf", "白": "云朵小猫白.gcode.3mf"}, "desc": "软乎乎窝在云朵上打呼~打工人的治愈本命，选它超安心喵~"},
-  {"id": "classic_spring_cat", "name": "弹力萌猫", "image": "/static/images/cat_spring.png", "model": "弹簧小猫黑.gcode.3mf", "models": {"黑": "弹簧小猫黑.gcode.3mf", "白": "弹簧小猫白.gcode.3mf"}, "desc": "哇哦！弹力十足！打印出来手感一定超级解压喵~"},
-  {"id": "classic_ring_cat", "name": "喵星指环", "image": "/static/images/cat_ring.jpg", "model": "戒指小猫黑.gcode.3mf", "models": {"黑": "戒指小猫黑.gcode.3mf", "白": "戒指小猫白.gcode.3mf"}, "desc": "太精致了吧！把本喵戴在手上，吸睛率绝对200%！"},
-  {"id": "classic_sitting_cat", "name": "端坐奶猫", "image": "/static/images/cat_base.png", "model": "CatKeychain黑.gcode.3mf", "models": {"黑": "CatKeychain黑.gcode.3mf", "白": "CatKeychain白.gcode.3mf"}, "desc": "哇！这只大眼萌猫呆萌又乖巧，最适合放在桌面上陪伴你啦喵~"}
+  {"id": "classic_lazy_cat", "name": "云栖懒猫", "image": "/static/images/cat_lay.jpg", "turntable": "云朵小猫", "model": "cloud_cat_black.gcode.3mf", "models": {"黑": "cloud_cat_black.gcode.3mf", "白": "cloud_cat_white.gcode.3mf"}, "desc": "软乎乎窝在云朵上打呼~打工人的治愈本命，选它超安心喵~"},
+  {"id": "classic_spring_cat", "name": "弹力萌猫", "image": "/static/images/cat_spring.png", "turntable": "弹簧小猫", "model": "spring_cat_black.gcode.3mf", "models": {"黑": "spring_cat_black.gcode.3mf", "白": "spring_cat_white.gcode.3mf"}, "desc": "哇哦！弹力十足！打印出来手感一定超级解压喵~"},
+  {"id": "classic_ring_cat", "name": "喵星指环", "image": "/static/images/cat_ring.jpg", "turntable": "戒指小猫", "model": "ring_cat_black.gcode.3mf", "models": {"黑": "ring_cat_black.gcode.3mf", "白": "ring_cat_white.gcode.3mf"}, "desc": "太精致了吧！把本喵戴在手上，吸睛率绝对200%！"},
+  {"id": "classic_sitting_cat", "name": "端坐奶猫", "image": "/static/images/cat_base.png", "turntable": "CatKeychain", "model": "catkeychain_black.gcode.3mf", "models": {"黑": "catkeychain_black.gcode.3mf", "白": "catkeychain_white.gcode.3mf"}, "desc": "哇！这只大眼萌猫呆萌又乖巧，最适合放在桌面上陪伴你啦喵~"}
 ]

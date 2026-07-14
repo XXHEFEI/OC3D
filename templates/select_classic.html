@@ -190,7 +190,11 @@
 
         function goToPreview() {
             if (!currentIP) return;
-            location.href = `preview_classic.html?name=${encodeURIComponent(currentIP.name)}&img=${encodeURIComponent(currentIP.image)}&id=${encodeURIComponent(currentIP.id)}&model=${encodeURIComponent(currentIP.model)}`;
+            // tt=转台帧文件夹名(中文,走HTTP没问题)；mb/mw=黑/白打印切片名(纯ASCII,走FTP避免553)
+            const tt = currentIP.turntable || (currentIP.model || '').replace(/\.gcode\.3mf$/i, '').replace(/[黑白]$/, '');
+            const mb = (currentIP.models && currentIP.models['黑']) || currentIP.model || '';
+            const mw = (currentIP.models && currentIP.models['白']) || currentIP.model || '';
+            location.href = `preview_classic.html?name=${encodeURIComponent(currentIP.name)}&img=${encodeURIComponent(currentIP.image)}&id=${encodeURIComponent(currentIP.id)}&tt=${encodeURIComponent(tt)}&mb=${encodeURIComponent(mb)}&mw=${encodeURIComponent(mw)}`;
         }
 
         loadIPs();

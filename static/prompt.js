@@ -17,10 +17,22 @@ const PRINTER_SERIAL = '20P6BJ652100030';
 const PRINTER_IP     = '172.20.10.6';
 const ACCESS_CODE    = 'be45c93c';
 
+// The sliced files keep the project filament index in the G-code:
+//   black: logical filament 2 -> physical AMS slot 2 (C)
+//   white: logical filament 1 -> physical AMS slot 1 (B)
+// ams_mapping is a project-index lookup, so unused logical filaments are -1.
+function getAmsMapping(modelFile) {
+  const name = (modelFile || '').toLowerCase();
+  if (name.includes('_black.gcode.3mf')) return '-1,-1,2';
+  if (name.includes('_white.gcode.3mf')) return '-1,1';
+  return '';
+}
 
 function buildPrintPrompt(modelName, taskId, modelFile) {
   const modelPath = `${STOCK_DIR}/${modelFile}`;
   const bambuDir  = `${SKILLS_DIR}/bambu-studio-ai/scripts`;
+  const amsMapping = getAmsMapping(modelFile);
+  const amsMappingArg = amsMapping ? ' --ams-mapping "' + amsMapping + '"' : '';
   const setStatus = [
     `import sys, os; os.environ['PYTHONIOENCODING'] = 'utf-8'`,
     `sys.path.insert(0, '${WORK_DIR}')`,
@@ -49,7 +61,7 @@ monitor_bridge.py 和后端 WebSocket 自动完成。
 ## 步骤 1 — 发送打印文件
 \`\`\`bash
 export BAMBU_MODE=local BAMBU_IP="${PRINTER_IP}" BAMBU_SERIAL="${PRINTER_SERIAL}" BAMBU_ACCESS_CODE="${ACCESS_CODE}" PYTHONIOENCODING=utf-8
-python3 "${bambuDir}/bambu.py" print "${modelPath}" --confirmed
+python3 "${bambuDir}/bambu.py" print "${modelPath}" --confirmed${amsMappingArg}
 \`\`\`
 - 输出含「Started printing」→ 更新状态后继续步骤 2。
 - **失败**（不含 Started printing 或命令异常退出）→ 立即执行：

@@ -584,14 +584,19 @@ class LocalBackend:
                         elif key == "nozzle_diameters":
                             meta["nozzle_diameters"] = val
 
-                # ── filament_sequence.json → ams_mapping ──
+                # ── filament_sequence.json → logical_filament_sequence ──
                 if "Metadata/filament_sequence.json" in zf.namelist():
                     fs = _json.loads(
                         zf.read("Metadata/filament_sequence.json").decode("utf-8")
                     )
                     plate_key = f"plate_{plate_number}"
                     if plate_key in fs:
-                        meta["ams_mapping"] = fs[plate_key].get("sequence", [0])
+                        # This is the project's logical filament sequence,
+                        # not the physical AMS tray mapping. Physical tray
+                        # mapping is supplied separately in project_file.
+                        meta["logical_filament_sequence"] = fs[plate_key].get(
+                            "sequence", []
+                        )
 
                 # ── project_settings.config (JSON, not XML) — curr_bed_type label ──
                 if "Metadata/project_settings.config" in zf.namelist():
@@ -619,7 +624,7 @@ class LocalBackend:
         Args:
             filename: Path to file (local) or filename on printer
             plate_number: Plate number for 3mf files (default: 1)
-            ams_mapping: AMS slot mapping for 3mf (e.g., [0, 1, 2])
+            ams_mapping: Project-index AMS mapping for 3mf (e.g., [-1, -1, 2])
         """
         import os as _fos, json as _json
 
@@ -628,7 +633,21 @@ class LocalBackend:
             # the MQTT payload matches what the slicer actually produced.
             slicing_meta = self._read_3mf_metadata(filename, plate_number)
 
-            mapping = ams_mapping if ams_mapping is not None else slicing_meta.get("ams_mapping", [0])
+            # An explicit mapping is a project-index lookup table. Do not use
+            # filament_sequence.json's logical IDs as physical tray numbers.
+            # With no explicit mapping, retain the legacy external-spool
+            # default for the stock/non-AMS path.
+            mapping = ams_mapping if ams_mapping is not None else [0]
+            active_filament_ids = slicing_meta.get("filament_ids", [])
+            if ams_mapping is not None:
+                missing = [
+                    idx for idx in active_filament_ids
+                    if idx >= len(mapping) or mapping[idx] == -1
+                ]
+                if missing:
+                    raise ValueError(
+                        f"AMS mapping does not cover logical filament indices: {missing}"
+                    )
             _m2 = ams_mapping2 if ams_mapping2 else []
             use_ams = any(m not in (0, -1) for m in mapping) or \
                       any(m not in (0, -1) for m in _m2)
@@ -657,7 +676,7 @@ class LocalBackend:
                         "subtask_id": "0",
                         "subtask_name": "",
                         "file": remote_filename,
-                        "url": f"ftp://{remote_filename}",
+                        "url": f"ftp:///{remote_filename}",
                         "md5": slicing_meta.get("gcode_md5", ""),
                         "timelapse": slicing_meta.get("timelapse", False),
                         "bed_type": slicing_meta.get("bed_type", "textured_plate"),
@@ -1162,7 +1181,11 @@ def main():
     sub.add_parser("snapshot")
     p = sub.add_parser("print")
     p.add_argument("--confirmed", action="store_true", help="Confirm previewed in Bambu Studio")
-    p.add_argument("--ams-mapping", type=str, help="AMS slot mapping for left hotend (comma-separated, e.g., 0,1,2)")
+    p.add_argument(
+        "--ams-mapping",
+        type=str,
+        help="Project-index AMS mapping (comma-separated, e.g., -1,-1,2)",
+    )
     p.add_argument("--ams-mapping2", type=str, help="AMS slot mapping for right hotend (X2D only)")
     p.add_argument("filename")
     p = sub.add_parser("upload", help="Upload file to printer via FTP")
