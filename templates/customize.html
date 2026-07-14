@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>“龙虾套餐”: 体验多智能体协作 - 魔法衣橱</title>
+    <title>龙虾套餐”: 体验多智能体协作 - 魔法衣橱</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -68,7 +68,7 @@
 
         /* 猫咪向导 */
         .stylist-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-        .stylist-cat { width: 160px; filter: drop-shadow(0 0 15px rgba(255,65,108,0.2)); }
+        .stylist-cat { width: 220px; filter: drop-shadow(0 0 15px rgba(255,65,108,0.2)); }
         .stylist-bubble { background: rgba(15, 15, 25, 0.8); border: 1px solid #ff416c; padding: 20px 30px; border-radius: 20px; color: #fff; font-size: 18px; line-height: 1.6; flex: 1; box-shadow: 0 5px 20px rgba(255,65,108,0.2); position: relative; backdrop-filter: blur(10px);}
         .stylist-bubble::before { content: ''; position: absolute; top: 50%; left: -14px; transform: translateY(-50%); border-right: 14px solid #ff416c; border-top: 10px solid transparent; border-bottom: 10px solid transparent; }
 
@@ -119,16 +119,16 @@
             
             <div class="model-wrapper">
                 <div id="laser" class="laser-scanner"></div>
-                <img id="main-model" src="static/xixi_diy/0_cloth_o0.png" class="stage-model" alt="合成效果图">
+                <img id="main-model" src="static/3D/0_cloth_o0.png" class="stage-model" alt="合成效果图">
             </div>
             
             <div class="hologram-base"></div>
         </div>
 
         <div class="right-ui">
-            <div class="station-title" style="margin-bottom: 30px;">“龙虾套餐”: 体验多智能体协作</div>
+            <div class="station-title" style="margin-bottom: 30px;">龙虾套餐”: 体验多智能体协作</div>
             <div class="stylist-header">
-                <img id="cat-img" src="static/images/cat.gif" class="stylist-cat">
+                <img id="cat-img" src="static/images/video-to-gif-1783478310857_matting.gif" class="stylist-cat">
                 <div id="cat-bubble" class="stylist-bubble">
                     喵！大设计师，欢迎使用 <span style="color:#ff416c; font-weight:bold;">算力衣橱</span>！<br>
                     点击下方选项卡，任意组合你的专属外观吧！
@@ -151,8 +151,6 @@
         </div>
     </div>
 
-    <script src="static/gateway.js?v=2"></script>
-    <script src="static/prompt.generate.js?v=4"></script>
     <script>
         // 完全重推后的数据，绝对对应 0-5 逻辑
         const wardrobeData = {
@@ -178,7 +176,6 @@
         let selectedCloth = 0;
         let selectedOrnament = 0;
         let isRendering = false;
-        let gw = null;  // OpenClaw Gateway 连接，点封装时按需连接
 
         window.onload = () => {
             renderGrid('cloth');
@@ -223,9 +220,9 @@
             });
         }
 
-        // 最纯粹的组合逻辑，完全摒弃任何多余判断
+        // 主预览用 static/3D 下的 36 张 3D 正视图（{衣}_cloth_o{配}.png）
         function getImagePath(c, o) {
-            return `static/xixi_diy/${c}_cloth_o${o}.png`;
+            return `static/3D/${c}_cloth_o${o}.png`;
         }
 
         function applyMagic(type, id, catSpeech) {
@@ -270,7 +267,7 @@
                 mainImg.style.transform = 'scale(1)';
                 
                 laser.style.display = 'none';
-                cat.src = 'static/images/cat.gif';
+                cat.src = 'static/images/video-to-gif-1783478310857_matting.gif';
                 bubble.innerHTML = `✅ 对接完毕！<br>${catSpeech}`;
                 
                 packBtn.disabled = false;
@@ -281,29 +278,8 @@
             }, 1200); 
         }
 
-        // 封装：连 Gateway → 建任务 → 让 OpenClaw Agent 跑升维 → 跳预览页看真实进度
-        async function packCapsule() {
-            const comboId = `${selectedCloth}_${selectedOrnament}`;
-            const btn = document.getElementById('pack-btn');
-            btn.disabled = true;
-            btn.style.background = "#333";
-            try {
-                if (!gw) gw = new GatewayChat();
-                if (!gw.connected) { btn.innerText = "连接 OpenClaw..."; await gw.connect(); }
-                btn.innerText = "正在封装...";
-                const res = await fetch('/api/generate', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ip_id: comboId }),
-                });
-                const { task_id } = await res.json();
-                await gw.sendMessage(buildGenPrompt(comboId, task_id));
-                location.href = `preview_diy.html?c=${selectedCloth}&o=${selectedOrnament}&task=${task_id}`;
-            } catch (e) {
-                alert('生成启动失败：' + (e.message || e) + '\n请确认 OpenClaw Gateway 已启动。');
-                btn.disabled = false;
-                btn.style.background = "linear-gradient(90deg, #ff416c, #ff4b2b)";
-                btn.innerText = "✨ 封装数据胶囊";
-            }
+        function packCapsule() {
+            location.href = `preview_diy.html?c=${selectedCloth}&o=${selectedOrnament}`;
         }
     </script>
 </body>

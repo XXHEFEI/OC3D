@@ -77,7 +77,7 @@ function renderFrame() {
 
 function startAutoplay() {
     if (autoplayTimer) return;
-    autoplayTimer = setInterval(() => { currentFrame += 1; renderFrame(); }, 60);
+    autoplayTimer = setInterval(() => { currentFrame += 1; renderFrame(); }, 120); // 每帧停留 ms，数字越大转得越慢
 }
 function stopAutoplay() {
     if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; }

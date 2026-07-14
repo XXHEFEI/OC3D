@@ -9,7 +9,7 @@
         body { font-family: 'PingFang SC', sans-serif; background: #08080c; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
         .top-bar { position: absolute; top: 40px; right: 60px; z-index: 100; }
-        .logo { height: 30px; opacity: 0.9; }
+        .logo { height: 40px; opacity: 0.9; }
 
         /* ================= 1. 加载罩层 ================= */
         #loading-view { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; gap: 80px; position: absolute; inset: 0; background: radial-gradient(circle at center, #0f172a 0%, #050508 100%); z-index: 50;}
@@ -18,9 +18,9 @@
         /* 指向猫的右侧小箭头 */
         .loading-card::after { content: ''; position: absolute; top: 50%; right: -22px; transform: translateY(-50%); border-left: 22px solid #00F0FF; border-top: 15px solid transparent; border-bottom: 15px solid transparent; }
         
-        .loading-title { font-size: 32px; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px;}
-        .loading-highlight { color: #00F0FF; font-size: 40px; text-shadow: 0 0 15px rgba(0,240,255,0.5); }
-        .loading-sub { font-size: 18px; color: #aaa; margin-bottom: 40px; letter-spacing: 1px;}
+        .loading-title { font-size: 44px; font-weight: bold; margin-bottom: 25px; letter-spacing: 3px;}
+        .loading-highlight { color: #00F0FF; font-size: 52px; text-shadow: 0 0 15px rgba(0,240,255,0.5); }
+        .loading-sub { font-size: 28px; color: #aaa; margin-bottom: 45px; letter-spacing: 2px;}
         
         .progress-box { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
         .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ff416c, #00F0FF); box-shadow: 0 0 15px #00F0FF; transition: width 0.1s linear; }
@@ -33,40 +33,59 @@
         
         /* 左侧：3D全景展台 */
         .left-stage { flex: 5.5; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-right: 1px solid rgba(255,255,255,0.05); }
-        .header-title { position: absolute; top: 20px; left: 60px; }
-        .title-text { font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 10px; letter-spacing: 2px;}
-        .sub-text { font-size: 16px; color: #00F0FF; opacity: 0.8;}
+        .header-title { position: absolute; top: 20px; left: 60px; z-index: 10; } /* 调整层级，使其在光晕之上 */
+        .title-text { font-size: 48px; font-weight: bold; color: #fff; margin-bottom: 12px; letter-spacing: 3px;}
+        .sub-text { font-size: 26px; color: #00F0FF; opacity: 0.8;}
         
-        .stage-center { position: relative; width: 100%; height: 60%; display: flex; justify-content: center; align-items: center; }
-        .stage-ground { position: absolute; bottom: 0; width: 400px; height: 80px; background: radial-gradient(ellipse at center, rgba(0,240,255,0.2) 0%, transparent 70%); border: 1px dashed rgba(0,240,255,0.3); border-radius: 50%; transform: rotateX(75deg); box-shadow: 0 0 30px rgba(0,240,255,0.1); }
-        .model-img { max-width: 70%; max-height: 90%; z-index: 10; object-fit: contain; animation: float 4s infinite ease-in-out; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8));}
+        /* 调整展台容器：高度减小，margin-top 降低，让它整体靠下并贴近按钮 */
+        .stage-center { position: relative; width: 100%; height: 55%; display: flex; justify-content: center; align-items: center; margin-top: -10px; z-index: 5; } 
+        /* 调整地面线位置，匹配模型下移 */
+        .stage-ground { position: absolute; bottom: -10px; width: 400px; height: 80px; background: radial-gradient(ellipse at center, rgba(0,240,255,0.2) 0%, transparent 70%); border: 1px dashed rgba(0,240,255,0.3); border-radius: 50%; transform: rotateX(75deg); box-shadow: 0 0 30px rgba(0,240,255,0.1); }
         
-        .controls { display: flex; gap: 20px; margin-top: 40px; background: rgba(255,255,255,0.02); padding: 15px 30px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px);}
-        .angle-btn { background: transparent; border: none; color: #888; font-size: 18px; cursor: pointer; padding: 10px 30px; border-radius: 30px; font-weight: bold; transition: 0.3s; letter-spacing: 1px;}
-        .angle-btn.active { background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; box-shadow: 0 5px 15px rgba(0,198,255,0.4);}
-        .angle-btn:hover:not(.active) { color: #fff; }
+        /* 新增：展台后方的纯色光晕特效（位置稍微下调适应模型） */
+        #stage-halo { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px; background: radial-gradient(circle at center, rgba(0, 240, 255, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(50px); opacity: 0.8; z-index: 1; pointer-events: none; }
+
+        /* 调整模型图片：去掉 bottom 边距，增加 top 边距使其下沉靠拢底线 */
+        .model-img { width: 180%; height: 180%; z-index: 10; object-fit: contain; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8)); cursor: grab; user-select: none; margin-top: 40px; margin-bottom: 0; transition: filter 0.3s ease; } 
+        .model-img.black-model-fix { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8)) brightness(1.3) contrast(1.1); } /* 黑色模型增强亮度/对比度 */
+        .model-img:active { cursor: grabbing; }
+        
+        /* 转台控制区：margin-top 缩小拉近距离 */
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 10px; background: rgba(255,255,255,0.02); padding: 20px 40px; border-radius: 45px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); position: relative; z-index: 20; }
+        .btn-row { display: flex; gap: 20px; align-items: center; }
+        .color-btn { background: transparent; border: 2px solid #444; color: #888; font-size: 26px; cursor: pointer; padding: 18px 50px; border-radius: 35px; font-weight: bold; transition: 0.3s; letter-spacing: 2px;}
+        .color-btn.active { border-color: #00F0FF; color: #fff; box-shadow: 0 5px 15px rgba(0,240,255,0.4);}
+        .color-btn:hover:not(.active) { color: #fff; border-color: #888; }
+        .color-btn.btn-black { background: linear-gradient(135deg, #222, #333); color: #fff; border-color: #555; }
+        .color-btn.btn-black.active { background: linear-gradient(135deg, #00c6ff, #0072ff); border-color: #00F0FF; }
+        .color-btn.btn-white { background: linear-gradient(135deg, #f0f0f0, #fff); color: #333; border-color: #ccc; }
+        .color-btn.btn-white.active { background: linear-gradient(135deg, #00c6ff, #0072ff); color: #fff; border-color: #00F0FF; }
+        .color-btn.btn-play { background: linear-gradient(135deg, #1a1a2e, #16213e); color: #00F0FF; border-color: #00F0FF; }
+        .color-btn.btn-play.active { background: linear-gradient(135deg, #00c6ff, #0072ff); color: #fff; }
+
+        .drag-hint { color: #777; font-size: 26px; letter-spacing: 2px; }
 
         /* 右侧：确认对接舱 */
         .right-panel { flex: 4.5; padding: 40px 80px; display: flex; flex-direction: column; justify-content: center; }
         
         .guide-area { display: flex; align-items: center; gap: 20px; margin-bottom: 50px; }
-        .guide-cat { width: 140px; filter: drop-shadow(0 0 15px rgba(0,240,255,0.1)); }
-        .guide-bubble { background: rgba(0,240,255,0.05); border: 1px solid #00F0FF; padding: 20px 25px; border-radius: 16px; color: #ddd; font-size: 18px; line-height: 1.6; position: relative; flex: 1; box-shadow: inset 0 0 20px rgba(0,240,255,0.05);}
+        .guide-cat { width: 180px; filter: drop-shadow(0 0 15px rgba(0,240,255,0.1)); }
+        .guide-bubble { background: rgba(0,240,255,0.05); border: 1px solid #00F0FF; padding: 25px 30px; border-radius: 18px; color: #ddd; font-size: 28px; line-height: 1.6; position: relative; flex: 1; box-shadow: inset 0 0 20px rgba(0,240,255,0.05);}
         .guide-bubble::before { content: ''; position: absolute; top: 50%; left: -14px; transform: translateY(-50%); border-right: 14px solid #00F0FF; border-top: 10px solid transparent; border-bottom: 10px solid transparent; }
         .guide-highlight { color: #00F0FF; font-weight: bold; }
 
         .dock-card { background: rgba(20,20,25,0.8); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column;}
-        .dock-title { font-size: 24px; font-weight: bold; margin-bottom: 30px; letter-spacing: 1px;}
+        .dock-title { font-size: 36px; font-weight: bold; margin-bottom: 35px; letter-spacing: 2px;}
         
         .info-group { margin-bottom: 25px; }
-        .info-label { font-size: 14px; color: #666; margin-bottom: 8px; }
-        .info-val { font-size: 22px; font-weight: bold; color: #fff; }
-        .info-val.cyan { color: #00F0FF; font-size: 18px;}
+        .info-label { font-size: 24px; color: #666; margin-bottom: 10px; }
+        .info-val { font-size: 34px; font-weight: bold; color: #fff; }
+        .info-val.cyan { color: #00F0FF; font-size: 28px;}
 
         .btn-group { display: flex; gap: 20px; margin-top: 20px; }
-        .btn-back { background: transparent; border: 1px solid #444; color: #aaa; padding: 18px 30px; border-radius: 30px; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        .btn-back { background: transparent; border: 1px solid #444; color: #aaa; padding: 22px 40px; border-radius: 35px; font-size: 24px; cursor: pointer; transition: 0.3s; }
         .btn-back:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .btn-confirm { background: linear-gradient(90deg, #ff416c, #ff4b2b); flex: 1; color: #fff; border: none; border-radius: 40px; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(255,65,108,0.4); transition: 0.3s; letter-spacing: 2px;}
+        .btn-confirm { background: linear-gradient(90deg, #ff416c, #ff4b2b); flex: 1; color: #fff; border: none; border-radius: 45px; font-size: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 25px rgba(255,65,108,0.4); transition: 0.3s; letter-spacing: 3px;}
         .btn-confirm:hover { transform: scale(1.02); box-shadow: 0 12px 35px rgba(255,65,108,0.6); }
 
     </style>
@@ -90,18 +109,21 @@
         <div class="left-stage">
             <div class="header-title">
                 <div class="title-text">3D 模型全景预览</div>
-                <div class="sub-text">支持多视角拨动查看结构细节</div>
+                <div class="sub-text">拖动模型可360°自由旋转查看</div>
             </div>
             
-            <div class="stage-center">
+            <div id="stage-halo"></div> <div class="stage-center">
                 <div class="stage-ground"></div>
                 <img id="model-display" src="" class="model-img">
             </div>
 
             <div class="controls">
-                <button class="angle-btn active" onclick="changeAngle('front', this)">正面</button>
-                <button class="angle-btn" onclick="changeAngle('side', this)">侧面</button>
-                <button id="btn-back-view" class="angle-btn" onclick="changeAngle('back', this)">背面</button>
+                <div class="btn-row">
+                    <button id="btn-play" class="color-btn btn-play active" onclick="toggleAutoRotate(this)">▶ 自动旋转</button>
+                    <button id="btn-black" class="color-btn btn-black" onclick="switchColor('黑', this)">黑色</button>
+                    <button id="btn-white" class="color-btn btn-white" onclick="switchColor('白', this)">白色</button>
+                </div>
+                <span class="drag-hint">← 拖动模型自由旋转 →</span>
             </div>
         </div>
 
@@ -109,7 +131,7 @@
             <div class="guide-area">
                 <img src="static/images/cat.png" class="guide-cat">
                 <div id="guide-bubble" class="guide-bubble">
-                    喵！<span class="guide-highlight">正面</span> 看起来简直完美！<br>细节都还原得很到位呢！
+                    喵！<span class="guide-highlight">360° 全景</span> 预览已开启！<br>拖动模型可以自由旋转查看哦！
                 </div>
             </div>
 
@@ -134,36 +156,149 @@
     </div>
 
     <script>
-        // 1. 获取 URL 传过来的选中参数
         const urlParams = new URLSearchParams(window.location.search);
         const modelName = urlParams.get('name') || '经典款';
-        const originalImg = urlParams.get('img') || 'static/images/cat_lay.jpg';
+        // model 形如 "云朵小猫黑.gcode.3mf"（含颜色）——来自 ips/list.json 的默认 model（黑）
+        const modelFile = urlParams.get('model') || '';
 
-        // 2. 核心逻辑：智能解析图片路径
-        const lastDotIndex = originalImg.lastIndexOf('.');
-        const basePath = originalImg.substring(0, lastDotIndex); // 例如: static/images/cat_lay
+        // 去掉扩展名和末尾颜色字，得到不含颜色的基名 = 转台帧文件夹名，也是拼打印文件名的前缀
+        // 例："云朵小猫黑.gcode.3mf" → "云朵小猫"；"CatKeychain白.gcode.3mf" → "CatKeychain"
+        const modelBase = modelFile.replace(/\.gcode\.3mf$/i, '').replace(/[黑白]$/, '');
+        const turntableFolder = modelBase;
+        const TOTAL_FRAMES = 37;
+        const FRAME_DURATION = 120;
 
-        // 【关键修复1】强制使用 .png 后缀（因为你的三视图全都是 .png 格式）
-        const imgFront = `${basePath}_front.png`;
-        const imgSide = `${basePath}_side.png`;
-        
-        // 【关键修复2】专门针对 cat_lay (躺平猫猫) 的 _top 处理
-        let imgBack = `${basePath}_back.png`; // 拼接出来是 cat_base_back.png
-        const isCatLay = basePath.includes('cat_lay');
-        
-        if (isCatLay) {
-            imgBack = `${basePath}_top.png`; // 躺平猫猫使用的是 _top.png
-            document.getElementById('btn-back-view').innerText = '顶面'; // 动态修改按钮文字
+        let currentFrame = 0;
+        let autoRotate = true;
+        let rotateTimer = null;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartFrame = 0;
+        let currentColor = '黑';
+
+        const modelDisplay = document.getElementById('model-display');
+
+        const frameCache = { '黑': [], '白': [] };
+        function loadFrames(color) {
+            frameCache[color] = [];
+            for (let i = 0; i < TOTAL_FRAMES; i++) {
+                const img = new Image();
+                img.src = `static/turntable/${turntableFolder}/${color}/${i}.png`;
+                frameCache[color].push(img);
+            }
+        }
+        loadFrames('黑');
+        loadFrames('白');
+
+        function showFrame(index) {
+            currentFrame = ((index % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
+            const frame = frameCache[currentColor][currentFrame];
+            if (frame && frame.complete && frame.naturalWidth > 0) {
+                modelDisplay.src = frame.src;
+            } else {
+                modelDisplay.src = `static/turntable/${turntableFolder}/${currentColor}/${currentFrame}.png`;
+            }
+
+            // --- 修改 2: 黑色模型增强亮度/对比度 ---
+            if (currentColor === '黑') {
+                modelDisplay.classList.add('black-model-fix');
+            } else {
+                modelDisplay.classList.remove('black-model-fix');
+            }
         }
 
-        // 初始化界面内容
-        document.getElementById('data-name').innerText = modelName;
-        const modelDisplay = document.getElementById('model-display');
-        
-        // 默认首先展示正面视图
-        modelDisplay.src = imgFront;
+        function startAutoRotate() {
+            if (rotateTimer) clearInterval(rotateTimer);
+            rotateTimer = setInterval(() => {
+                showFrame(currentFrame + 1);
+            }, FRAME_DURATION);
+        }
 
-        // 页面刚加载：执行进度条动画
+        function stopAutoRotate() {
+            if (rotateTimer) {
+                clearInterval(rotateTimer);
+                rotateTimer = null;
+            }
+        }
+
+        function toggleAutoRotate(btn) {
+            autoRotate = !autoRotate;
+            if (autoRotate) {
+                btn.classList.add('active');
+                startAutoRotate();
+                document.getElementById('guide-bubble').innerHTML = `喵！<span class="guide-highlight">自动旋转</span> 已开启！<br>模型正在360°旋转展示~`;
+            } else {
+                btn.classList.remove('active');
+                stopAutoRotate();
+                document.getElementById('guide-bubble').innerHTML = `自动旋转已暂停！<br>拖动模型可自由旋转~`;
+            }
+        }
+
+        function switchColor(color, btn) {
+            currentColor = color;
+            autoRotate = false;
+            stopAutoRotate();
+            const btns = document.querySelectorAll('.color-btn');
+            for (let i = 0; i < btns.length; i++) {
+                btns[i].classList.remove('active');
+            }
+            btn.classList.add('active');
+            showFrame(currentFrame);
+            const colorName = color === '黑' ? '黑色' : '白色';
+            document.getElementById('guide-bubble').innerHTML = `已切换至 <span class="guide-highlight">${colorName}</span> 款式！<br>拖动模型可360°自由旋转~`;
+        }
+
+        // 鼠标拖动旋转
+        modelDisplay.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartFrame = currentFrame;
+            autoRotate = false;
+            stopAutoRotate();
+            document.getElementById('btn-play').classList.remove('active');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - dragStartX;
+            const frameDelta = Math.round(dx / 8);
+            showFrame(dragStartFrame + frameDelta);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+            }
+        });
+
+        // 触摸支持
+        modelDisplay.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            dragStartX = e.touches[0].clientX;
+            dragStartFrame = currentFrame;
+            autoRotate = false;
+            stopAutoRotate();
+            document.getElementById('btn-play').classList.remove('active');
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const dx = e.touches[0].clientX - dragStartX;
+            const frameDelta = Math.round(dx / 8);
+            showFrame(dragStartFrame + frameDelta);
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+            }
+        });
+
+        // 初始化
+        document.getElementById('data-name').innerText = modelName;
+        showFrame(0);
+
         window.onload = () => {
             const bar = document.getElementById('loading-bar');
             const text = document.getElementById('loading-text');
@@ -182,45 +317,20 @@
                     text.innerText = texts[3];
                     text.style.color = "#00F0FF";
                     setTimeout(() => {
-                        // 隐藏加载，显示主界面
                         document.getElementById('loading-view').style.display = 'none';
                         document.getElementById('main-view').style.display = 'flex';
+                        startAutoRotate();
                     }, 600);
                 }
             }, 30); 
         };
 
-        // 视角拨动交互
-        function changeAngle(angle, btn) {
-            document.querySelectorAll('.angle-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            const bubble = document.getElementById('guide-bubble');
-            
-            if(angle === 'front') {
-                modelDisplay.src = imgFront;
-                bubble.innerHTML = `喵！<span class="guide-highlight">正面</span> 看起来简直完美！<br>细节都还原得很到位呢！`;
-            }
-            if(angle === 'side') {
-                modelDisplay.src = imgSide;
-                bubble.innerHTML = `哇哦~ <span class="guide-highlight">侧面</span> 的立体感好棒！<br>物理结构非常清晰喵！`;
-            }
-            if(angle === 'back') {
-                modelDisplay.src = imgBack;
-                // 如果是躺平猫猫，改变文案为“顶面”
-                if (isCatLay) {
-                    bubble.innerHTML = `<span class="guide-highlight">顶面</span> 的视角也好可爱！<br>摊成一张猫饼啦，可以放心打印！`;
-                } else {
-                    bubble.innerHTML = `<span class="guide-highlight">背面</span> 的元素也没落下！<br>360度无死角的精致，可以放心打印啦！`;
-                }
-            }
-        }
-
-        // 跳转去打印 (往下传递原始图片参数，以备后续环节使用)
         function confirmPrint() {
+            const originalImg = urlParams.get('img') || '';
             const modelId = urlParams.get('id') || '';
-            const modelFile = urlParams.get('model') || '';
-            location.href = `printing_classic.html?name=${encodeURIComponent(modelName)}&img=${encodeURIComponent(originalImg)}&id=${encodeURIComponent(modelId)}&model=${encodeURIComponent(modelFile)}`;
+            // 按用户在预览里选中的颜色，拼出对应颜色的切片文件名去打印（黑=…黑.gcode.3mf / 白=…白.gcode.3mf）
+            const printModel = modelBase ? `${modelBase}${currentColor}.gcode.3mf` : modelFile;
+            location.href = `printing_classic.html?name=${encodeURIComponent(modelName)}&img=${encodeURIComponent(originalImg)}&id=${encodeURIComponent(modelId)}&model=${encodeURIComponent(printModel)}&color=${encodeURIComponent(currentColor)}`;
         }
     </script>
 </body>

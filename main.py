@@ -48,7 +48,7 @@ GATEWAY_WS = "ws://127.0.0.1:18789"
 
 # 占位打印目标：白模未定稿期间，"同意打印"实际送去打印机的是这个
 # 已经在 Bambu Studio 里手动切好片的官方校准方块项目文件。
-STOCK_PRINT_3MF = BASE / "static" / "3D" / "cat.gcode.3mf"
+STOCK_PRINT_3MF = BASE / "static" / "3D_model" / "cat.gcode.3mf"
 DISCOVER_SCRIPT = BASE / "discover_printer.py"
 BAMBU_SKILL_DIR = BASE / "bambu-studio-ai"
 BAMBU_SCRIPTS_DIR = BAMBU_SKILL_DIR / "scripts"

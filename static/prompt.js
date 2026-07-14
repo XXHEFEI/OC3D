@@ -12,7 +12,7 @@
 
 const WORK_DIR   = "/Users/hefei/Desktop/MX_intern/OC3D";
 const SKILLS_DIR = "/Users/hefei/Desktop/MX_intern/OC3D";
-const STOCK_DIR  = "/Users/hefei/Desktop/MX_intern/OC3D/static/3D";
+const STOCK_DIR  = "/Users/hefei/Desktop/MX_intern/OC3D/static/3D_model";
 const PRINTER_SERIAL = '20P6BJ652100030';
 const PRINTER_IP     = '172.20.10.6';
 const ACCESS_CODE    = 'be45c93c';
