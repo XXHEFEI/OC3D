@@ -69,16 +69,10 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // 【OSS 接入点 —— 等 OSS 部署好后在这里接入】
-        //   36 个换装搭配(衣0-5 × 配0-5)每个对应一个打包文件(三视图+视频)。
-        //   接入步骤：
-        //     1) 把 OSS_READY 改成 true
-        //     2) 确认 OSS_BASE、ossPackageUrl() 与你 OSS 上的实际路径/命名一致
-        //        例：combo 衣3+配2 → 需要 OSS 上存在  diy/3_2.zip
-        //   在此之前 OSS_READY=false，二维码位显示"待接入"占位，不生成死链二维码。
-        const OSS_READY = false;                                   // ← OSS 好了改成 true
-        const OSS_BASE  = 'https://my-3d-assets.oss-cn-shanghai.aliyuncs.com';  // ← 换成真实 bucket 域名
-        const ossPackageUrl = (c, o) => `${OSS_BASE}/diy/${c}_${o}.zip`;        // ← 对齐真实命名
+        // 预制二维码存放在本地静态目录：现场展示不依赖二维码 CDN 或运行时生成。
+        // 未上传的搭配会因 PNG 不存在自动显示“待接入”。
+        const QR_ASSET_BASE = 'static/qr';
+        const OSS_BASE  = 'https://metax-waic-3d.oss-cn-shanghai.aliyuncs.com';
         // ═══════════════════════════════════════════════════════════════
 
         function makeQR(url) {
@@ -98,6 +92,15 @@
                 + '<span style="font-size:12px;">（OSS 部署后自动生成）</span></div>';
         }
 
+        function showPrebuiltQR(combo) {
+            qrBox.innerHTML = '';
+            const qrImg = document.createElement('img');
+            qrImg.src = `${QR_ASSET_BASE}/${combo}.png`;
+            qrImg.alt = `搭配 ${combo} 的下载二维码`;
+            qrImg.onerror = () => showPending(...combo.split('_'));
+            qrBox.appendChild(qrImg);
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const c = urlParams.get('c');
         const o = urlParams.get('o');
@@ -106,9 +109,8 @@
         const qrBox = document.getElementById('qrcode-box');
 
         if (c !== null && o !== null) {
-            // 换装 DIY：二维码指向 OSS 上该搭配的打包文件（三视图+视频）
-            if (OSS_READY) makeQR(ossPackageUrl(c, o));
-            else showPending(c, o);
+            const combo = `${c}_${o}`;
+            showPrebuiltQR(combo);
         } else if (task) {
             // 兼容旧流程：后端生成二维码（走 task_state 的 oss_url / 本地 bundle）
             qrBox.innerHTML = '';
