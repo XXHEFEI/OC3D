@@ -119,7 +119,7 @@
             
             <div class="model-wrapper">
                 <div id="laser" class="laser-scanner"></div>
-                <img id="main-model" src="static/3D/0_cloth_o0.png" class="stage-model" alt="合成效果图">
+                <img id="main-model" src="static/xixi_diy/0_cloth_o0.png" class="stage-model" alt="合成效果图">
             </div>
             
             <div class="hologram-base"></div>
@@ -220,9 +220,9 @@
             });
         }
 
-        // 主预览用 static/3D 下的 36 张 3D 正视图（{衣}_cloth_o{配}.png）
+        // 主预览统一用 2D 合成图：static/xixi_diy 下的 {衣}_cloth_o{配}.png
         function getImagePath(c, o) {
-            return `static/3D/${c}_cloth_o${o}.png`;
+            return `static/xixi_diy/${c}_cloth_o${o}.png`;
         }
 
         function applyMagic(type, id, catSpeech) {

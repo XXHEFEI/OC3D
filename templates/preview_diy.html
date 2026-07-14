@@ -127,7 +127,7 @@
                 
                 <div class="btn-group">
                     <button class="btn-back" onclick="location.href='customize.html'">返回重选</button>
-                    <button class="btn-confirm" onclick="location.href='takeaway.html?name=DIY定制款&img=' + encodeURIComponent(modelDisplay.src)">确认并生成数字凭证</button>
+                    <button class="btn-confirm" onclick="goTakeaway()">确认并生成数字凭证</button>
                 </div>
             </div>
         </div>
@@ -135,20 +135,25 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const c = urlParams.get('c') || 0; 
-        const o = urlParams.get('o') || 0; 
+        const c = urlParams.get('c') || 0;
+        const o = urlParams.get('o') || 0;
+
+        // 把当前搭配(c/o)带到 takeaway，让二维码指向 OSS 上该搭配的三视图+视频打包文件
+        function goTakeaway() {
+            location.href = `takeaway.html?name=DIY定制款&c=${encodeURIComponent(c)}&o=${encodeURIComponent(o)}`;
+        }
 
         const modelDisplay = document.getElementById('model-display');
         const scanLayer = document.getElementById('scan-layer');
         const guideBubble = document.getElementById('guide-bubble');
 
-        // 三视图统一取 static/3D（与 customize 预览同一套 3D 正视图，保证同一个模型看起来一致）
+        // 三视图统一取 static/xixi_diy/3D 下对应文件
         // 侧/背视图尚未扣好——缺图时 onerror 自动回退到占位图
         const PLACEHOLDER = 'static/images/view_placeholder.png';
         const viewImages = {
-            front: `static/3D/${c}_cloth_o${o}.png`,
-            side: `static/3D/${c}_cloth_o${o}side.png`,
-            back: `static/3D/${c}_cloth_o${o}back.png`
+            front: `static/xixi_diy/3D/${c}_cloth_o${o}.png`,
+            side: `static/xixi_diy/3D/${c}_cloth_o${o}side.png`,
+            back: `static/xixi_diy/3D/${c}_cloth_o${o}back.png`
         };
         // 任意视图加载失败（多为侧/背未就绪）→ 顶上占位图，避免图裂
         modelDisplay.onerror = () => {

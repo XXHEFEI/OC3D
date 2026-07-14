@@ -68,12 +68,49 @@
     </div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        // 【OSS 接入点 —— 等 OSS 部署好后在这里接入】
+        //   36 个换装搭配(衣0-5 × 配0-5)每个对应一个打包文件(三视图+视频)。
+        //   接入步骤：
+        //     1) 把 OSS_READY 改成 true
+        //     2) 确认 OSS_BASE、ossPackageUrl() 与你 OSS 上的实际路径/命名一致
+        //        例：combo 衣3+配2 → 需要 OSS 上存在  diy/3_2.zip
+        //   在此之前 OSS_READY=false，二维码位显示"待接入"占位，不生成死链二维码。
+        const OSS_READY = false;                                   // ← OSS 好了改成 true
+        const OSS_BASE  = 'https://my-3d-assets.oss-cn-shanghai.aliyuncs.com';  // ← 换成真实 bucket 域名
+        const ossPackageUrl = (c, o) => `${OSS_BASE}/diy/${c}_${o}.zip`;        // ← 对齐真实命名
+        // ═══════════════════════════════════════════════════════════════
+
+        function makeQR(url) {
+            console.log('二维码指向:', url);
+            qrBox.innerHTML = '';
+            new QRCode(qrBox, {
+                text: url, width: 240, height: 240,
+                colorDark: '#000000', colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function showPending(c, o) {
+            // OSS 未接入时的占位（保留每个搭配的位置，接入后自动生效）
+            qrBox.innerHTML = '<div style="color:#888;font-size:15px;line-height:1.7;text-align:center;">'
+                + '二维码待接入<br><span style="color:#00F0FF;">搭配 ' + c + '_' + o + '</span><br>'
+                + '<span style="font-size:12px;">（OSS 部署后自动生成）</span></div>';
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
+        const c = urlParams.get('c');
+        const o = urlParams.get('o');
         const task = urlParams.get('task');
-        const imgSrc = urlParams.get('img'); 
+        const imgSrc = urlParams.get('img');
         const qrBox = document.getElementById('qrcode-box');
 
-        if (task) {
+        if (c !== null && o !== null) {
+            // 换装 DIY：二维码指向 OSS 上该搭配的打包文件（三视图+视频）
+            if (OSS_READY) makeQR(ossPackageUrl(c, o));
+            else showPending(c, o);
+        } else if (task) {
+            // 兼容旧流程：后端生成二维码（走 task_state 的 oss_url / 本地 bundle）
             qrBox.innerHTML = '';
             const qrImg = document.createElement('img');
             qrImg.src = '/api/qr/' + encodeURIComponent(task);
@@ -83,24 +120,9 @@
             };
             qrBox.appendChild(qrImg);
         } else if (imgSrc) {
-            // 1. 从路径中提取出文件名 (比如 0_cloth_o0.png)
+            // 兼容旧流程：按单张图名拼 OSS 直链
             const fileName = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);
-
-            // 2. 拼接出您阿里云 OSS 的真实外网地址
-            const ossUrl = `https://my-3d-assets.oss-cn-shanghai.aliyuncs.com/3D/${fileName}`;
-            
-            console.log("即将生成二维码的云端链接:", ossUrl);
-
-            // 3. 清空提示，生成二维码
-            qrBox.innerHTML = ''; 
-            new QRCode(qrBox, {
-                text: ossUrl,
-                width: 240, 
-                height: 240,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            makeQR(`${OSS_BASE}/3D/${fileName}`);
         } else {
             qrBox.innerHTML = '<span style="color:red;font-size:14px;">未获取到模型数据</span>';
         }
