@@ -8,7 +8,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'PingFang SC', sans-serif; background: #08080c; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1a0f1c 0%, #050508 100%);}
         
-        .top-bar { position: absolute; top: 40px; right: 60px; z-index: 100; }
+        /* 修改：让 Logo 靠右对齐 */
+        .top-bar { position: absolute; top: 40px; width: 100%; display: flex; justify-content: flex-end; padding: 0 60px; z-index: 100; pointer-events: none; align-items: center; }
         .logo { height: 35px; opacity: 0.9; }
 
         /* ==== 加载罩层 ==== */
@@ -33,16 +34,13 @@
         .stage-center { position: relative; width: 100%; height: 60%; display: flex; justify-content: center; align-items: center; }
         .stage-ground { position: absolute; bottom: 0; width: 400px; height: 80px; background: radial-gradient(ellipse at center, rgba(255,65,108,0.2) 0%, transparent 70%); border: 1px dashed rgba(255,65,108,0.3); border-radius: 50%; transform: rotateX(75deg); box-shadow: 0 0 30px rgba(255,65,108,0.1); }
         
-        /* 优化：缩短过渡动画的过渡时间，从 0.4s 加快到 0.25s，让隐去更利落 */
         .model-img { max-width: 80%; max-height: 100%; z-index: 10; object-fit: contain; animation: float 4s infinite ease-in-out; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8)); transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;}
         
-        /* 三视图切换按钮样式 */
         .view-controls { display: flex; gap: 15px; margin-top: 30px; z-index: 20; }
         .btn-view { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #ccc; padding: 12px 30px; border-radius: 20px; font-size: 18px; cursor: pointer; transition: all 0.3s; }
         .btn-view:hover { background: rgba(255, 65, 108, 0.1); border-color: #ff416c; color: #fff; }
         .btn-view.active { background: linear-gradient(90deg, #ff416c, #ff4b2b); border-color: transparent; color: #fff; box-shadow: 0 0 15px rgba(255, 65, 108, 0.4); }
 
-        /* 特效粒子扫描光环 (动画时间加快，配合紧凑节奏) */
         .scan-effect { position: absolute; width: 280px; height: 38px; z-index: 15; display: none; pointer-events: none; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.6) 0%, rgba(255, 65, 108, 0.2) 50%, transparent 100%); filter: blur(4px); box-shadow: 0 0 20px rgba(0, 240, 255, 0.5); animation: scanVibrate 0.8s infinite ease-in-out; }
         @keyframes scanVibrate { 0%, 100% { transform: translateY(-80px) scale(0.9); opacity: 0.3; } 50% { transform: translateY(80px) scale(1.1); opacity: 0.9; } }
 
@@ -96,7 +94,6 @@
                 <img id="model-display" src="" class="model-img">
             </div>
 
-            <!-- 三视图切换控制按钮组 -->
             <div class="view-controls">
                 <button class="btn-view active" onclick="switchView('front', this)">正面</button>
                 <button class="btn-view" onclick="switchView('side', this)">侧面</button>
@@ -107,9 +104,11 @@
         <div class="right-panel">
             <div class="guide-area">
                 <img src="static/images/video-to-gif-1783478310857_matting.gif" class="guide-cat">
+                <!-- 修改：气泡里加入包含惊喜视频的文字提示 -->
                 <div id="guide-bubble" class="guide-bubble">
                     喵呜！这就是根据您的搭配生成的 3D 模型实体啦！<br>
-                    如果满意的话，就可以进入下一步扫码提取咯~
+                    如果满意的话，就可以进入下一步扫码提取咯~<br>
+                    <span style="color: #ff416c; font-size: 18px; margin-top: 8px; display: block;">🎁 (提取的专属压缩包里，还藏着给你的惊喜小视频哦！)</span>
                 </div>
             </div>
 
@@ -127,7 +126,8 @@
                 
                 <div class="btn-group">
                     <button class="btn-back" onclick="location.href='customize.html'">返回重选</button>
-                    <button class="btn-confirm" onclick="goTakeaway()">确认并生成数字凭证</button>
+                    <!-- 修改：不再传递 img 路径，而是直接传递 c 和 o 两个参数 -->
+                    <button class="btn-confirm" onclick="location.href='takeaway.html?c=' + c + '&o=' + o">确认并生成数字凭证</button>
                 </div>
             </div>
         </div>
@@ -135,29 +135,17 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const c = urlParams.get('c') || 0;
-        const o = urlParams.get('o') || 0;
-
-        // 把当前搭配(c/o)带到 takeaway，让二维码指向 OSS 上该搭配的三视图+视频打包文件
-        function goTakeaway() {
-            location.href = `takeaway.html?name=DIY定制款&c=${encodeURIComponent(c)}&o=${encodeURIComponent(o)}`;
-        }
+        const c = urlParams.get('c') || 0; 
+        const o = urlParams.get('o') || 0; 
 
         const modelDisplay = document.getElementById('model-display');
         const scanLayer = document.getElementById('scan-layer');
         const guideBubble = document.getElementById('guide-bubble');
 
-        // 三视图统一取 static/xixi_diy/3D 下对应文件
-        // 侧/背视图尚未扣好——缺图时 onerror 自动回退到占位图
-        const PLACEHOLDER = 'static/images/view_placeholder.png';
         const viewImages = {
             front: `static/xixi_diy/3D/${c}_cloth_o${o}.png`,
             side: `static/xixi_diy/3D/${c}_cloth_o${o}side.png`,
             back: `static/xixi_diy/3D/${c}_cloth_o${o}back.png`
-        };
-        // 任意视图加载失败（多为侧/背未就绪）→ 顶上占位图，避免图裂
-        modelDisplay.onerror = () => {
-            if (modelDisplay.src.indexOf('view_placeholder') === -1) modelDisplay.src = PLACEHOLDER;
         };
 
         const xixiDialogues = {
@@ -171,26 +159,24 @@
 
         let isSwitching = false; 
         
-        // 💡 节奏调校：缩短到 0.5s 空顿，总计 1.6s 左右平滑呈现
         function switchView(viewType, btnElement) {
             if (isSwitching) return;
             isSwitching = true;
 
             document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
-            guideBubble.innerHTML = xixiDialogues.scanning;
+            
+            // 切换视角时不覆盖之前的惊喜提示，保留原有的结构
+            guideBubble.innerHTML = xixiDialogues.scanning + '<br><span style="color: #ff416c; font-size: 18px; margin-top: 8px; display: block;">🎁 (提取的专属压缩包里，还藏着给你的惊喜小视频哦！)</span>';
 
-            // 1. 第一阶段：旧图在 0.25 秒内利落地完全淡出
             modelDisplay.style.opacity = '0';
             modelDisplay.style.filter = 'blur(6px)';
             modelDisplay.style.transform = 'scale(0.9) translateY(10px)';
 
-            // 2. 第二阶段：展现扫描动画
             setTimeout(() => {
                 scanLayer.style.display = 'block';
             }, 100);
 
-            // 3. 第三阶段：在总计 0.75 秒时（旧图隐藏后空顿了约0.5秒），静默完成换图并柔和展现新图
             setTimeout(() => {
                 modelDisplay.src = viewImages[viewType];
                 
@@ -199,12 +185,14 @@
                     modelDisplay.style.opacity = '1';
                     modelDisplay.style.filter = 'none';
                     modelDisplay.style.transform = 'scale(1) translateY(0)';
-                    guideBubble.innerHTML = xixiDialogues[viewType];
+                    
+                    // 恢复文字并保留惊喜提示
+                    guideBubble.innerHTML = xixiDialogues[viewType] + '<br><span style="color: #ff416c; font-size: 18px; margin-top: 8px; display: block;">🎁 (提取的专属压缩包里，还藏着给你的惊喜小视频哦！)</span>';
                     
                     isSwitching = false;
                 }, 50); 
                 
-            }, 750); // 0.25秒淡出 + 0.5秒完全看不见旧图的“空顿扫描期”
+            }, 750);
         }
 
         window.onload = () => {

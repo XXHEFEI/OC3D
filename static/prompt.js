@@ -32,7 +32,8 @@ function buildPrintPrompt(modelName, taskId, modelFile) {
   const modelPath = `${STOCK_DIR}/${modelFile}`;
   const bambuDir  = `${SKILLS_DIR}/bambu-studio-ai/scripts`;
   const amsMapping = getAmsMapping(modelFile);
-  const amsMappingArg = amsMapping ? ' --ams-mapping "' + amsMapping + '"' : '';
+  // 用等号而非空格：值以 -1 开头，空格分隔会被 argparse 误判成另一个选项（expected one argument）
+  const amsMappingArg = amsMapping ? ' --ams-mapping="' + amsMapping + '"' : '';
   const setStatus = [
     `import sys, os; os.environ['PYTHONIOENCODING'] = 'utf-8'`,
     `sys.path.insert(0, '${WORK_DIR}')`,

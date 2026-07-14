@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetaX 空间站 - 扫码提取</title>
+    <title>MetaX 空间站 - 扫码提取与打印</title>
     <style>
-        /* 样式保持不变 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'PingFang SC', sans-serif; background: #050508; color: #fff; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1a0f1c 0%, #050508 100%);}
         
-        .top-bar { position: absolute; top: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 60px; z-index: 100; pointer-events: none; align-items: center; }
+        .top-bar { position: absolute; top: 40px; width: 100%; display: flex; justify-content: flex-end; padding: 0 60px; z-index: 100; pointer-events: none; align-items: center; }
         .logo { height: 35px; opacity: 0.9; }
 
         .takeaway-card {
             background: rgba(20, 20, 25, 0.85); border: 2px solid rgba(255, 65, 108, 0.3);
-            border-radius: 30px; padding: 60px 80px; text-align: center;
+            border-radius: 30px; padding: 50px 70px; text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 0 40px rgba(255,65,108,0.05);
             backdrop-filter: blur(20px); position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center;
+            max-width: 800px;
         }
 
         .title { font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 15px; letter-spacing: 2px;}
-        .subtitle { font-size: 20px; color: #ff416c; margin-bottom: 40px; letter-spacing: 1px;}
+        
+        .subtitle { font-size: 20px; color: #ddd; margin-bottom: 35px; letter-spacing: 1px; line-height: 1.6;}
+        .highlight-text { color: #ff416c; font-size: 18px; font-weight: bold;}
 
         .qr-container {
             position: relative; width: 280px; height: 280px; padding: 20px;
@@ -32,18 +34,33 @@
         .qr-container .corner-tr { position: absolute; top: -2px; right: -2px; width: 30px; height: 30px; border-top: 4px solid #ff416c; border-right: 4px solid #ff416c; border-top-right-radius: 10px;}
         .qr-container .corner-bl { position: absolute; bottom: -2px; left: -2px; width: 30px; height: 30px; border-bottom: 4px solid #ff416c; border-left: 4px solid #ff416c; border-bottom-left-radius: 10px;}
 
-        .qr-image { width: 100%; height: 100%; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 18px; overflow: hidden;}
-        .qr-image img { width: 100%; height: 100%; object-fit: cover;}
+        .qr-image { width: 100%; height: 100%; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;}
         
+        /* 初始隐藏二维码图片 */
+        .qr-image img { width: 100%; height: 100%; object-fit: contain; padding: 10px; display: none; opacity: 0; transition: opacity 0.5s ease;}
+        
+        /* 新增：缓冲加载动画样式 */
+        .loading-text { font-size: 18px; font-weight: bold; color: #ff416c; animation: pulse 1.5s infinite; letter-spacing: 1px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .btn-group { display: flex; gap: 20px; width: 100%; justify-content: center; }
+
+        .btn-secondary { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); 
+            color: #ccc; padding: 18px 40px; border-radius: 40px; font-size: 22px; 
+            cursor: pointer; transition: all 0.3s; letter-spacing: 1px;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff;}
+
         .finish-btn { 
-            background: linear-gradient(90deg, #ff416c, #ff4b2b); color: #fff; border: none; padding: 20px 60px; border-radius: 40px; font-size: 24px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 65, 108, 0.4); transition: all 0.3s; letter-spacing: 2px; 
+            background: linear-gradient(90deg, #ff416c, #ff4b2b); color: #fff; border: none; 
+            padding: 18px 40px; border-radius: 40px; font-size: 22px; font-weight: bold; 
+            cursor: pointer; box-shadow: 0 10px 30px rgba(255, 65, 108, 0.4); transition: all 0.3s; letter-spacing: 1px; 
         }
         .finish-btn:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(255, 65, 108, 0.6); }
 
         .cat-guide { position: absolute; bottom: -50px; left: -180px; width: 220px; filter: drop-shadow(0 0 20px rgba(255,65,108,0.2));}
     </style>
-
-    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -53,80 +70,63 @@
 
     <div class="takeaway-card">
         <div class="title">数字资产已就绪</div>
-        <div class="subtitle">请使用手机扫码，将您的专属 3D 模型保存至本地</div>
+        
+        <div class="subtitle">
+            请使用手机扫码，提取您的专属 3D 模型压缩包<br>
+            <span class="highlight-text">🎁 (解压后内含您的专属 DIY 惊喜小视频哦！)</span>
+        </div>
         
         <div class="qr-container">
             <div class="corner-tr"></div>
             <div class="corner-bl"></div>
             <div id="qrcode-box" class="qr-image">
-                <span>生成中...</span>
+                <!-- 缓冲加载文案 -->
+                <div id="loading-tip" class="loading-text">正在生成专属提取码...</div>
+                <img id="static-qr" src="" alt="提取二维码">
             </div>
         </div>
 
-        <button class="finish-btn" onclick="location.href='/'">结束 / 返回首页</button>
+        <div class="btn-group">
+            <button class="finish-btn" onclick="location.href='index.html'">结束 / 返回首页</button>
+        </div>
+
         <img src="static/images/cat.png" class="cat-guide" onerror="this.style.display='none'">
     </div>
 
     <script>
-        // ═══════════════════════════════════════════════════════════════
-        // 预制二维码存放在本地静态目录：现场展示不依赖二维码 CDN 或运行时生成。
-        // 未上传的搭配会因 PNG 不存在自动显示“待接入”。
-        const QR_ASSET_BASE = 'static/qr';
-        const OSS_BASE  = 'https://metax-waic-3d.oss-cn-shanghai.aliyuncs.com';
-        // ═══════════════════════════════════════════════════════════════
-
-        function makeQR(url) {
-            console.log('二维码指向:', url);
-            qrBox.innerHTML = '';
-            new QRCode(qrBox, {
-                text: url, width: 240, height: 240,
-                colorDark: '#000000', colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }
-
-        function showPending(c, o) {
-            // OSS 未接入时的占位（保留每个搭配的位置，接入后自动生效）
-            qrBox.innerHTML = '<div style="color:#888;font-size:15px;line-height:1.7;text-align:center;">'
-                + '二维码待接入<br><span style="color:#00F0FF;">搭配 ' + c + '_' + o + '</span><br>'
-                + '<span style="font-size:12px;">（OSS 部署后自动生成）</span></div>';
-        }
-
-        function showPrebuiltQR(combo) {
-            qrBox.innerHTML = '';
-            const qrImg = document.createElement('img');
-            qrImg.src = `${QR_ASSET_BASE}/${combo}.png`;
-            qrImg.alt = `搭配 ${combo} 的下载二维码`;
-            qrImg.onerror = () => showPending(...combo.split('_'));
-            qrBox.appendChild(qrImg);
-        }
-
         const urlParams = new URLSearchParams(window.location.search);
-        const c = urlParams.get('c');
-        const o = urlParams.get('o');
-        const task = urlParams.get('task');
-        const imgSrc = urlParams.get('img');
-        const qrBox = document.getElementById('qrcode-box');
+        const c = urlParams.get('c'); 
+        const o = urlParams.get('o'); 
+        
+        const qrImageElement = document.getElementById('static-qr');
+        const loadingTip = document.getElementById('loading-tip');
 
         if (c !== null && o !== null) {
-            const combo = `${c}_${o}`;
-            showPrebuiltQR(combo);
-        } else if (task) {
-            // 兼容旧流程：后端生成二维码（走 task_state 的 oss_url / 本地 bundle）
-            qrBox.innerHTML = '';
-            const qrImg = document.createElement('img');
-            qrImg.src = '/api/qr/' + encodeURIComponent(task);
-            qrImg.alt = '二维码';
-            qrImg.onerror = () => {
-                qrBox.innerHTML = '<span style="color:red;font-size:14px;">二维码生成失败</span>';
-            };
-            qrBox.appendChild(qrImg);
-        } else if (imgSrc) {
-            // 兼容旧流程：按单张图名拼 OSS 直链
-            const fileName = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);
-            makeQR(`${OSS_BASE}/3D/${fileName}`);
+            const qrImagePath = `static/qr/${c}_${o}.png`;
+            
+            // 延迟 2 秒执行，制造系统处理的缓冲感
+            setTimeout(() => {
+                qrImageElement.src = qrImagePath;
+                
+                // 确保图片加载完成后再显示，避免看到图片加载一半的闪烁
+                qrImageElement.onload = function() {
+                    loadingTip.style.display = 'none';
+                    qrImageElement.style.display = 'block';
+                    // 加上一点小小的透明度渐变动画，显得更平滑
+                    setTimeout(() => {
+                        qrImageElement.style.opacity = '1';
+                    }, 50);
+                };
+                
+                qrImageElement.onerror = function() {
+                    loadingTip.style.animation = 'none';
+                    loadingTip.innerHTML = '<span style="color:red;font-size:14px;">未能找到对应的二维码，请联系工作人员</span>';
+                };
+            }, 2000); // 此处的 2000 代表 2 秒缓冲时间，可根据需要微调
+            
         } else {
-            qrBox.innerHTML = '<span style="color:red;font-size:14px;">未获取到模型数据</span>';
+            loadingTip.style.animation = 'none';
+            loadingTip.innerHTML = '<span style="color:red;font-size:14px;">未获取到模型参数</span>';
         }
     </script>
 </body>
