@@ -315,6 +315,7 @@
         // ─── WebSocket 与 打印引擎逻辑 ───
         const urlParams = new URLSearchParams(window.location.search);
         const modelName = urlParams.get('name') || '';
+        const modelImg = urlParams.get('img') || '';
         const ipId = urlParams.get('id') || '';
         const modelFile = urlParams.get('model') || '';
 
@@ -344,8 +345,12 @@
                         bar.style.background = 'linear-gradient(90deg, transparent, #00FF88, #fff)'; 
                         bar.style.boxShadow = '0 0 15px #00FF88';
                         statusText.style.color = '#00FF88';
-                        // 跳转到 select 枢纽站页面
-                        setTimeout(() => { location.href = 'select.html'; }, 2000);
+                        // 打印监控正常结束后展示出舱完成页。
+                        setTimeout(() => {
+                            const query = new URLSearchParams({ name: modelName || '经典手办' });
+                            if (modelImg) query.set('img', modelImg);
+                            location.href = `finish_classic.html?${query.toString()}`;
+                        }, 2000);
                     } else if (state.status === 'failed') {
                         statusText.innerText = state.message || '网关连接超时，请联系管理员';
                         statusText.style.color = '#00F0FF';

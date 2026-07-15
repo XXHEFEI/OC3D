@@ -1,22 +1,14 @@
-"""
-main.py — FastAPI backend for IP Print Web.
+"""FastAPI backend for the OC3D print and wardrobe experiences.
 
-Endpoints:
-  GET  /              → select.html（新前端入口：打印 / 换装建模）
-  GET  /ws/gateway    → WebSocket proxy to OpenClaw Gateway
-  GET  /api/list-ips  → IP character list
-  POST /api/generate  → create a task, return task_id
-  GET  /api/status/{id}  → task state
-  GET  /api/download/{id} → .3mf file download
-  POST /api/print/{id}    → send stock test cube to printer (placeholder
-                             until the generated model's geometry is finalized)
+Printing is intentionally delegated to OpenClaw.  This service exposes the
+browser-to-Gateway bridge and task-status APIs; it does not configure OpenClaw
+or send jobs to a printer directly.
 """
 
 import asyncio
 import json
 import logging
 import os
-import subprocess
 from pathlib import Path
 
 import io
@@ -45,31 +37,6 @@ TEMPLATES = BASE / "templates"
 IP_IMAGES_DIR = BASE / "曦曦IP" / "曦曦IP" / "IP换装"
 
 GATEWAY_WS = "ws://127.0.0.1:18789"
-
-# 占位打印目标：白模未定稿期间，"同意打印"实际送去打印机的是这个
-# 已经在 Bambu Studio 里手动切好片的官方校准方块项目文件。
-STOCK_PRINT_3MF = BASE / "static" / "3D_model" / "cat.gcode.3mf"
-DISCOVER_SCRIPT = BASE / "discover_printer.py"
-BAMBU_SKILL_DIR = BASE / "bambu-studio-ai"
-BAMBU_SCRIPTS_DIR = BAMBU_SKILL_DIR / "scripts"
-BAMBU_SECRETS_PATH = BAMBU_SKILL_DIR / ".secrets.json"
-PRINTER_SERIAL = "20P6BJ652100030"
-
-
-def _bambu_env(printer_ip: str) -> dict:
-    """LocalBackend (bambu.py) only reads BAMBU_* from os.environ — it does
-    NOT fall back to config.json/.secrets.json for IP/serial/access_code.
-    So we must inject them explicitly for every subprocess call.
-    """
-    with open(BAMBU_SECRETS_PATH, encoding="utf-8") as f:
-        access_code = json.load(f)["access_code"]
-    env = os.environ.copy()
-    env["BAMBU_MODE"] = "local"
-    env["BAMBU_IP"] = printer_ip
-    env["BAMBU_SERIAL"] = PRINTER_SERIAL
-    env["BAMBU_ACCESS_CODE"] = access_code
-    env["PYTHONIOENCODING"] = "utf-8"
-    return env
 
 
 # ─── FastAPI app ──────────────────────────────────────────────────────────────
@@ -279,87 +246,13 @@ def api_qr(task_id: str, request: Request):
                     headers={"X-Download-URL": download_url})
 
 
-@app.post("/api/print/{task_id}")
-def api_print(task_id: str):
-    """User approved the preview. Send the printer a job.
-
-    Placeholder behavior: the model geometry the agent generates isn't
-    finalized yet (precision/print-time not validated), so this sends a
-    pre-sliced stock calibration cube instead, to validate the
-    discover → upload → start-print pipeline independently of model quality.
-    """
-    state = task_state.get_status(task_id)
-    if state.get("status") != "done":
-        raise HTTPException(400, "Task not ready for printing")
-
-    if not STOCK_PRINT_3MF.exists():
-        raise HTTPException(500, f"Stock print file missing: {STOCK_PRINT_3MF}")
-
-    # Step 1: re-resolve printer IP by serial (printer may have switched networks)
-    try:
-        disc = subprocess.run(
-            [
-                "python",
-                str(DISCOVER_SCRIPT),
-                "--serial",
-                PRINTER_SERIAL,
-                "--update-config",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            encoding="utf-8",
-        )
-    except subprocess.TimeoutExpired:
-        raise HTTPException(504, "打印机发现超时，请确认打印机已开机并在同一局域网")
-
-    if disc.returncode != 0:
-        log.error("discover_printer failed: %s", disc.stderr.strip())
-        raise HTTPException(502, "未找到打印机，请确认它已开机并连接到当前网络")
-
-    printer_ip = disc.stdout.strip().splitlines()[0] if disc.stdout.strip() else None
-    if not printer_ip:
-        raise HTTPException(502, "未能解析打印机 IP")
-
-    # Step 2: send the stock cube to the printer
-    try:
-        result = subprocess.run(
-            [
-                "python",
-                str(BAMBU_SCRIPTS_DIR / "bambu.py"),
-                "print",
-                str(STOCK_PRINT_3MF),
-                "--confirmed",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=_bambu_env(printer_ip),
-            encoding="utf-8",
-        )
-    except subprocess.TimeoutExpired:
-        raise HTTPException(504, "发送打印指令超时")
-
-    output = result.stdout + result.stderr
-    if "Started printing" not in output:
-        log.error("bambu.py print failed: %s", output.strip())
-        raise HTTPException(502, f"打印机未确认开始打印: {output.strip()[-300:]}")
-
-    task_state.set_status(
-        task_id,
-        "printing",
-        step="printing",
-        progress=100,
-        message=f"已发送至打印机（占位模型，IP {printer_ip}），等待自定义模型定稿后再切换",
-    )
-    return {"task_id": task_id, "status": "printing", "printer_ip": printer_ip}
-
-
 @app.get("/api/gateway-token")
 def api_gateway_token():
     """读本机 OpenClaw 配置里的 gateway token，供前端连接用。
     这样 token 不写死进仓库——每台机器读各自 openclaw.json（经 OPENCLAW_HOME 定位）。"""
-    home = os.environ.get("OPENCLAW_HOME") or os.path.expanduser("~/Desktop/openclaw-home")
+    home = os.environ.get("OPENCLAW_HOME")
+    if not home:
+        raise HTTPException(500, "OPENCLAW_HOME 未设置；请由外部 OpenClaw 环境提供")
     cfg = Path(home) / ".openclaw" / "openclaw.json"
     try:
         with open(cfg, encoding="utf-8") as f:

@@ -1,26 +1,14 @@
 /**
- * prompt.js — OpenClaw 打印提示词（唤醒经典 / 打印半）。
+ * OpenClaw print-prompt builder.
  *
- * printing_classic.html 引用，向 OpenClaw Agent 发送 3MF 直连打印指令。
- * bambu.py 通过 LAN (MQTT + FTPS) 直接与打印机通信。
- *
- * 步骤 2 的监控用后台非阻塞方式启动（bash nohup + disown，对应 master 版
- * PowerShell 的 Start-Process）：Agent 发完指令立即返回，不等打印完成——
- * 真正的 done/failed 由 monitor_bridge.py 自己在后台跑完后写 task_state，
- * 前端靠 /ws/task/{id} 收到（monitor_bridge.py 本身与 master 一致，未改）。
+ * This file deliberately contains no OpenClaw provider settings, model keys,
+ * printer address, serial number, or access code.  Those values belong to the
+ * already-configured OpenClaw host environment.
  */
 
-const WORK_DIR   = "/Users/hefei/Desktop/MX_intern/OC3D";
-const SKILLS_DIR = "/Users/hefei/Desktop/MX_intern/OC3D";
-const STOCK_DIR  = "/Users/hefei/Desktop/MX_intern/OC3D/static/3D_model";
-const PRINTER_SERIAL = '20P6BJ652100030';
-const PRINTER_IP     = '172.20.10.6';
-const ACCESS_CODE    = 'be45c93c';
-
 // The sliced files keep the project filament index in the G-code:
-//   black: logical filament 2 -> physical AMS slot 2 (C)
-//   white: logical filament 1 -> physical AMS slot 1 (B)
-// ams_mapping is a project-index lookup, so unused logical filaments are -1.
+// black: logical filament 2 -> physical AMS slot 2 (C)
+// white: logical filament 1 -> physical AMS slot 1 (B)
 function getAmsMapping(modelFile) {
   const name = (modelFile || '').toLowerCase();
   if (name.includes('_black.gcode.3mf')) return '-1,-1,2';
@@ -29,75 +17,59 @@ function getAmsMapping(modelFile) {
 }
 
 function buildPrintPrompt(modelName, taskId, modelFile) {
-  const modelPath = `${STOCK_DIR}/${modelFile}`;
-  const bambuDir  = `${SKILLS_DIR}/bambu-studio-ai/scripts`;
   const amsMapping = getAmsMapping(modelFile);
-  // 用等号而非空格：值以 -1 开头，空格分隔会被 argparse 误判成另一个选项（expected one argument）
-  const amsMappingArg = amsMapping ? ' --ams-mapping="' + amsMapping + '"' : '';
+  // Values starting with -1 must be passed with = so argparse treats them as
+  // the value of --ams-mapping rather than another option.
+  const amsMappingArg = amsMapping ? ` --ams-mapping="${amsMapping}"` : '';
   const setStatus = [
-    `import sys, os; os.environ['PYTHONIOENCODING'] = 'utf-8'`,
-    `sys.path.insert(0, '${WORK_DIR}')`,
-    `from task_state import set_status`,
+    "import os, sys; os.environ['PYTHONIOENCODING'] = 'utf-8'",
+    "sys.path.insert(0, os.environ['OC3D_PROJECT_DIR'])",
+    'from task_state import set_status',
   ].join('\n');
 
   return `
-打印任务：${modelName}，模型 ${modelPath}，task_id=${taskId}。
+打印任务：${modelName}，切片文件 ${modelFile}，task_id=${taskId}。
 
-bambu.py 直连打印机（LAN MQTT + FTPS），上传 .3mf 并下发打印指令；
-monitor_bridge.py 后台持续轮询并写状态文件，后端自动推送前端。
+本仓库只提供 OpenClaw 调用接口。执行环境已由现场运维预先配置：
+- OC3D_PROJECT_DIR：本仓库绝对路径。
+- BAMBU_MODE、BAMBU_IP、BAMBU_SERIAL、BAMBU_ACCESS_CODE：打印机本机环境变量。
+不要读取、显示、回传或修改这些环境变量的值，也不要创建或修改配置文件。
 
-## 你的职责
-只需按顺序执行命令。步骤 1 等待完成，步骤 2 用后台方式启动后立即继续，
-不要等它跑完。不要轮询状态、不要解析输出、不要推送前端——这些由
-monitor_bridge.py 和后端 WebSocket 自动完成。
-
-**重要**：每一步失败都必须 set_status failed，确保前端能看到失败信息。
+bambu.py 通过 LAN MQTT + FTPS 发送已切片的 3MF；monitor_bridge.py 在后台
+写入任务状态，后端 WebSocket 会自动推送进度。
 
 ## 规则
-- 按步骤逐字执行命令，不改参数，不改路径，不改环境变量。
-- 不修改任何文件。
-- 命令只跑一次，失败不重试。
-- 判定标准见各步骤说明。
+- 逐字执行下列命令，不改参数或路径；命令只跑一次，失败不重试。
+- 不要轮询打印机、解析输出或直接推送前端。
+- 输出含「Started printing」才算发送成功；失败时写 task_state 为 failed 后停止。
 
 ## 步骤 1 — 发送打印文件
 \`\`\`bash
-export BAMBU_MODE=local BAMBU_IP="${PRINTER_IP}" BAMBU_SERIAL="${PRINTER_SERIAL}" BAMBU_ACCESS_CODE="${ACCESS_CODE}" PYTHONIOENCODING=utf-8
-python3 "${bambuDir}/bambu.py" print "${modelPath}" --confirmed${amsMappingArg}
+export PYTHONIOENCODING=utf-8
+python3 "$OC3D_PROJECT_DIR/bambu-studio-ai/scripts/bambu.py" print \
+  "$OC3D_PROJECT_DIR/static/3D_model/${modelFile}" --confirmed${amsMappingArg}
 \`\`\`
-- 输出含「Started printing」→ 更新状态后继续步骤 2。
-- **失败**（不含 Started printing 或命令异常退出）→ 立即执行：
+- 失败时立即执行并停止：
 \`\`\`python
 ${setStatus}
 set_status('${taskId}', 'failed', step='print', progress=0, message='${modelName} 打印发送失败')
 \`\`\`
-如果失败就停止，不再执行后续步骤。
 
-成功后更新状态：
-\`\`\`python
-${setStatus}
-set_status('${taskId}', 'sending', step='sending', progress=5, message='${modelName} 已发送至打印机')
-\`\`\`
-
-## 步骤 2 — 后台启动监控，定时获取打印状态
-用 nohup 把 monitor_bridge.py 丢到后台运行，命令必须立即返回，不要等待它跑完。
+## 步骤 2 — 后台启动监控
 \`\`\`bash
-export BAMBU_MODE=local BAMBU_IP="${PRINTER_IP}" BAMBU_SERIAL="${PRINTER_SERIAL}" BAMBU_ACCESS_CODE="${ACCESS_CODE}" PYTHONIOENCODING=utf-8
-nohup python3 "${WORK_DIR}/monitor_bridge.py" "${taskId}" --interval 15 > "/tmp/monitor_${taskId}.log" 2>&1 &
+export PYTHONIOENCODING=utf-8
+nohup python3 "$OC3D_PROJECT_DIR/monitor_bridge.py" "${taskId}" --interval 15 \
+  > "/tmp/monitor_${taskId}.log" 2>&1 &
 disown
 \`\`\`
-这条命令应该几乎立即返回（不阻塞）。
-- **命令本身执行出错**（不是"打印还没完成"，而是命令报错无法启动）→ 执行：
-\`\`\`python
-${setStatus}
-set_status('${taskId}', 'failed', step='monitoring', progress=0, message='${modelName} 监控启动失败')
-\`\`\`
-停止，不再执行后续步骤。
+- 监控无法启动时写 failed 后停止；后台命令启动成功后不要等待它结束。
 
-## 步骤 3 — 确认监控运行中
+## 步骤 3 — 标记监控已就位
 \`\`\`python
 ${setStatus}
-set_status('${taskId}', 'printing', step='printing', progress=10, message='${modelName} 打印进行中，后台监控已就位')
+set_status('${taskId}', 'printing', step='printing', progress=10,
+           message='${modelName} 打印进行中，后台监控已就位')
 \`\`\`
-告诉用户：${modelName} 打印已启动！打印监控在后台运行中，完成后会自动更新状态。
+告诉用户：打印已启动，完成后页面会自动更新。
 `.trim();
 }
